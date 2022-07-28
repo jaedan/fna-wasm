@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <TargetArchitecture>wasm</TargetArchitecture>
+    <TargetOS>browser</TargetOS>
+    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+    <UseMonoRuntime>true</UseMonoRuntime>
+    <WasmMainJSPath>wwwroot/main.js</WasmMainJSPath>
+    <OutputType>Exe</OutputType>
+    <WasmEnableES6>true</WasmEnableES6>
+    <PublishTrimmed>true</PublishTrimmed>
+
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    
+    <WasmAppDir>../output/wwwroot</WasmAppDir>
+    <RunAOTCompilation>true</RunAOTCompilation>
+    <!--RunAOTCompilationAfterBuild>true</RunAOTCompilationAfterBuild-->
+
+    <EmccFlags>-sFULL_ES3</EmccFlags>
+
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <NativeFileReference Include="lib/FAudio.a" />
+    <NativeFileReference Include="lib/FNA3D.a" />
+    <NativeFileReference Include="lib/libmojoshader.a" />
+    <NativeFileReference Include="lib/SDL2.a" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\FNA.Web.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <WasmExtraFilesToDeploy Include="wwwroot/index.html" />
+    <WasmExtraFilesToDeploy Include="wwwroot/main.js" />
+    <WasmExtraFilesToDeploy Include="wwwroot/app-support.js" />
+  </ItemGroup>
+</Project>
