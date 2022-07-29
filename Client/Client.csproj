@@ -9,6 +9,7 @@
     <OutputType>Exe</OutputType>
     <WasmEnableES6>true</WasmEnableES6>
     <PublishTrimmed>true</PublishTrimmed>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     
@@ -29,11 +30,59 @@
   
   <ItemGroup>
     <ProjectReference Include="..\FNA\FNA.Wasm.csproj" />
+    <ProjectReference Include="..\MP3Sharp\MP3Sharp\MP3Sharp.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <WasmExtraFilesToDeploy Include="wwwroot/index.html" />
     <WasmExtraFilesToDeploy Include="wwwroot/main.js" />
     <WasmExtraFilesToDeploy Include="wwwroot/app-support.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="cuologo.png" />
+    <EmbeddedResource Include="Renderer\fonts\bold_font.xnb" />
+    <EmbeddedResource Include="Renderer\fonts\map1_font.xnb" />
+    <EmbeddedResource Include="Renderer\fonts\map2_font.xnb" />
+    <EmbeddedResource Include="Renderer\fonts\map3_font.xnb" />
+    <EmbeddedResource Include="Renderer\fonts\map4_font.xnb" />
+    <EmbeddedResource Include="Renderer\fonts\map5_font.xnb" />
+    <EmbeddedResource Include="Renderer\fonts\map6_font.xnb" />
+    <EmbeddedResource Include="Renderer\fonts\regular_font.xnb" />
+    <EmbeddedResource Include="shaders\IsometricWorld.fxc" />
+    <EmbeddedResource Include="shaders\xBR.fxc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources\ResErrorMessages.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ResErrorMessages.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\ResGeneral.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ResGeneral.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\ResGumps.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ResGumps.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\ResErrorMessages.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>ResErrorMessages.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\ResGeneral.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>ResGeneral.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\ResGumps.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>ResGumps.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>
