@@ -38,7 +38,7 @@ using ClassicUO.Game.UI.Gumps;
 using ClassicUO.Input;
 using ClassicUO.IO.Resources;
 using ClassicUO.Network;
-using ClassicUO.Resources;
+using Client.Resources;
 
 namespace ClassicUO.Game.Managers
 {

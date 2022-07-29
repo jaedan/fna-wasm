@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using ClassicUO.Resources;
+using Client.Resources;
 using Microsoft.Xna.Framework.Graphics;
 using static ClassicUO.Game.UI.Gumps.WorldMapGump;
 using ClassicUO.Renderer;

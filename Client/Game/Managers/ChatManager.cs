@@ -31,7 +31,7 @@
 #endregion
 
 using System.Collections.Generic;
-using ClassicUO.Resources;
+using Client.Resources;
 
 namespace ClassicUO.Game.Managers
 {

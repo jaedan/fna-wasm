@@ -6,7 +6,7 @@ using System.Xml;
 using ClassicUO.Configuration;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.UI.Gumps;
-using ClassicUO.Resources;
+using Client.Resources;
 using ClassicUO.Utility.Logging;
 
 namespace ClassicUO.Game.Managers

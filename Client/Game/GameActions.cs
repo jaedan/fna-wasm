@@ -40,7 +40,7 @@ using ClassicUO.Game.Scenes;
 using ClassicUO.Game.UI.Gumps;
 using ClassicUO.Input;
 using ClassicUO.Network;
-using ClassicUO.Resources;
+using Client.Resources;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
 using static ClassicUO.Network.NetClient;

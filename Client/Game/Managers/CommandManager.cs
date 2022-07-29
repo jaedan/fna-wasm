@@ -34,7 +34,7 @@ using System;
 using System.Collections.Generic;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Input;
-using ClassicUO.Resources;
+using Client.Resources;
 using ClassicUO.Utility.Logging;
 
 namespace ClassicUO.Game.Managers

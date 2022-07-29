@@ -4,7 +4,7 @@ using ClassicUO.Configuration;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Renderer;
-using ClassicUO.Resources;
+using Client.Resources;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
 

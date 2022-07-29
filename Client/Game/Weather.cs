@@ -34,7 +34,7 @@ using System;
 using ClassicUO.Configuration;
 using ClassicUO.Game.Data;
 using ClassicUO.Renderer;
-using ClassicUO.Resources;
+using Client.Resources;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
 using MathHelper = Microsoft.Xna.Framework.MathHelper;

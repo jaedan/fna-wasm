@@ -40,7 +40,7 @@ using ClassicUO.Game.UI.Controls;
 using ClassicUO.Input;
 using ClassicUO.Network;
 using ClassicUO.Renderer;
-using ClassicUO.Resources;
+using Client.Resources;
 using ClassicUO.Utility.Collections;
 using ClassicUO.Utility.Platforms;
 using SDL2;

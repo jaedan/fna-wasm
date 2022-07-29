@@ -39,7 +39,7 @@ using ClassicUO.Game.Scenes;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Input;
 using ClassicUO.IO.Resources;
-using ClassicUO.Resources;
+using Client.Resources;
 using ClassicUO.Utility.Logging;
 using SDL2;
 

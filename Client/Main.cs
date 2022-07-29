@@ -42,7 +42,7 @@ using ClassicUO.Data;
 using ClassicUO.Game;
 using ClassicUO.Game.Managers;
 using ClassicUO.IO;
-using ClassicUO.Resources;
+using Client.Resources;
 using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
 using ClassicUO.Utility.Platforms;

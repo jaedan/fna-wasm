@@ -34,7 +34,7 @@ using System.Collections.Generic;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.Scenes;
 using ClassicUO.Game.UI.Gumps;
-using ClassicUO.Resources;
+using Client.Resources;
 
 namespace ClassicUO.Game.UI.Controls
 {

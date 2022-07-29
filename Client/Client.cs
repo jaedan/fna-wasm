@@ -39,7 +39,7 @@ using ClassicUO.Game.Data;
 using ClassicUO.IO;
 using ClassicUO.Network;
 using ClassicUO.Network.Encryption;
-using ClassicUO.Resources;
+using Client.Resources;
 using ClassicUO.Utility.Logging;
 using ClassicUO.Utility.Platforms;
 using SDL2;

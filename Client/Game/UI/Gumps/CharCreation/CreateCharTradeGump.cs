@@ -39,7 +39,7 @@ using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.IO.Resources;
-using ClassicUO.Resources;
+using Client.Resources;
 
 namespace ClassicUO.Game.UI.Gumps.CharCreation
 {

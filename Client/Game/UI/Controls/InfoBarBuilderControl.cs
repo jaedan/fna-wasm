@@ -32,7 +32,7 @@
 
 using ClassicUO.Game.Managers;
 using ClassicUO.IO.Resources;
-using ClassicUO.Resources;
+using Client.Resources;
 
 namespace ClassicUO.Game.UI.Controls
 {

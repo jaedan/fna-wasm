@@ -30,7 +30,7 @@
 
 #endregion
 
-using ClassicUO.Resources;
+using Client.Resources;
 
 namespace ClassicUO.Game.Data
 {

@@ -41,7 +41,7 @@ using ClassicUO.Input;
 using ClassicUO.IO.Resources;
 using ClassicUO.Network;
 using ClassicUO.Renderer;
-using ClassicUO.Resources;
+using Client.Resources;
 using Microsoft.Xna.Framework;
 using SDL2;
 

@@ -7,7 +7,7 @@ using ClassicUO.Configuration;
 using ClassicUO.Game.UI.Controls;
 using static ClassicUO.Game.UI.Gumps.WorldMapGump;
 using ClassicUO.IO.Resources;
-using ClassicUO.Resources;
+using Client.Resources;
 
 namespace ClassicUO.Game.UI.Gumps
 {

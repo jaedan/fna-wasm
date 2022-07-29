@@ -38,7 +38,7 @@ using ClassicUO.Game.UI.Gumps;
 using ClassicUO.Input;
 using ClassicUO.IO.Resources;
 using ClassicUO.Renderer;
-using ClassicUO.Resources;
+using Client.Resources;
 using SDL2;
 
 namespace ClassicUO.Game.UI.Controls
