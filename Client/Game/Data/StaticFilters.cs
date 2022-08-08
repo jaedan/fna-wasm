@@ -60,7 +60,7 @@ namespace ClassicUO.Game.Data
 
         public static void Load()
         {
-            string path = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client");
+            string path = Path.Combine(CUOEnviroment.ExecutablePath, "Content/Data", "Client");
 
             if (!Directory.Exists(path))
             {
