@@ -1496,9 +1496,9 @@ namespace ClassicUO.Renderer
     {
         private static byte[] _isometricEffect, _xBREffect;
 
-        public static byte[] IsometricEffect => _isometricEffect ?? (_isometricEffect = GetResource("ClassicUO.shaders.IsometricWorld.fxc"));
+        public static byte[] IsometricEffect => _isometricEffect ?? (_isometricEffect = GetResource("Client.shaders.IsometricWorld.fxc"));
 
-        public static byte[] xBREffect => _xBREffect ?? (_xBREffect = GetResource("ClassicUO.shaders.xBR.fxc"));
+        public static byte[] xBREffect => _xBREffect ?? (_xBREffect = GetResource("Client.shaders.xBR.fxc"));
 
         public static byte[] StandardEffect
         {
@@ -1517,14 +1517,17 @@ namespace ClassicUO.Renderer
 
         private static byte[] GetResource(string name)
         {
-            Stream stream = typeof(UltimaBatcher2D).Assembly.GetManifestResourceStream(name);
 
+            Stream stream = typeof(UltimaBatcher2D).Assembly.GetManifestResourceStream(name);
+                        
             using (MemoryStream ms = new MemoryStream())
             {
                 stream.CopyTo(ms);
 
                 return ms.ToArray();
             }
+
+            
         }
     }
 }
