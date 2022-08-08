@@ -271,3 +271,6 @@ paket.lock
 __pycache__/
 *.pyc
 /.svn
+
+# UOData
+Client/Content/UOData
