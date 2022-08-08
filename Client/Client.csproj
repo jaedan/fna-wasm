@@ -20,7 +20,20 @@
     <EmccFlags>-sFULL_ES3</EmccFlags>
 
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Content\**\*.*" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <ItemGroup>
+      <WasmFilesToIncludeInFileSystem Include="@(Content)">
+        <TargetPath>%(Content.Identity)</TargetPath>
+      </WasmFilesToIncludeInFileSystem>
+    </ItemGroup>
+  </Target>
   
+    
   <ItemGroup>
     <NativeFileReference Include="lib/FAudio.a" />
     <NativeFileReference Include="lib/FNA3D.a" />
