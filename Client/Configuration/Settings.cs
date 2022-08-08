@@ -38,7 +38,7 @@ namespace ClassicUO.Configuration
 {
     internal sealed record Settings
     {
-        public const string SETTINGS_FILENAME = "settings.json";
+        public const string SETTINGS_FILENAME = "Content/settings.json";
         public static Settings GlobalSettings = new Settings();
         public static string CustomSettingsFilepath = null;
 
