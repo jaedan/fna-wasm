@@ -139,11 +139,11 @@ namespace ClassicUO.IO
             //Task.Run(async() => await SoundsLoader.Instance.Load());
             //Task.Run(async() => await MultiMapLoader.Instance.Load());
 
+            ClilocLoader.Instance.Load(Settings.GlobalSettings.Language);
             AnimationsLoader.Instance.Load();
             AnimDataLoader.Instance.Load();
             ArtLoader.Instance.Load();
             MapLoader.Instance.Load();
-            ClilocLoader.Instance.Load(Settings.GlobalSettings.Language);
             GumpsLoader.Instance.Load();
             FontsLoader.Instance.Load();
             HuesLoader.Instance.Load();
