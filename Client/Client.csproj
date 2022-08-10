@@ -10,15 +10,12 @@
     <WasmEnableES6>true</WasmEnableES6>
     <PublishTrimmed>true</PublishTrimmed>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    
     <WasmAppDir>../output/wwwroot</WasmAppDir>
     <RunAOTCompilation>true</RunAOTCompilation>
     <!--RunAOTCompilationAfterBuild>true</RunAOTCompilationAfterBuild-->
-
     <EmccFlags>-sFULL_ES3</EmccFlags>
-
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
