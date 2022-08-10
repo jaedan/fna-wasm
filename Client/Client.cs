@@ -74,16 +74,16 @@ namespace ClassicUO
                     Log.Trace("HIGH DPI - ENABLED");
                 }
 
-                Log.Trace("Loading plugins...");
+                //Log.Trace("Loading plugins...");
 
-                foreach (string p in Settings.GlobalSettings.Plugins)
-                {
-                    Plugin.Create(p);
-                }
+                //foreach (string p in Settings.GlobalSettings.Plugins)
+                //{
+                //    Plugin.Create(p);
+                //}
 
-                Log.Trace("Done!");
+                //Log.Trace("Done!");
 
-                UoAssist.Start();
+                //UoAssist.Start();
 
                 Game.Run();
             }
