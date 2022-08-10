@@ -1,3 +1,6 @@
 [submodule "FNA"]
 	path = FNA
 	url = https://github.com/jaedan/fna
+[submodule "MP3Sharp"]
+	path = MP3Sharp
+	url = https://github.com/jaedan/MP3Sharp

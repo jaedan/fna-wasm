@@ -22,4 +22,5 @@ app.UseStaticFiles(new StaticFileOptions
         DefaultContentType = "application/octet-stream"
 });
 
+app.MapFallbackToFile("index.html");
 app.Run();
