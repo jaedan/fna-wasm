@@ -53,46 +53,42 @@ namespace ClassicUO.IO.Resources
         public readonly List<SkillEntry> Skills = new List<SkillEntry>();
         public readonly List<SkillEntry> SortedSkills = new List<SkillEntry>();
 
-        public override unsafe Task Load()
+        public override unsafe void Load()
         {
-            return Task.Run
-            (
-                () =>
+
+            if (SkillsCount > 0)
+            {
+                return;
+            }
+
+            string path = UOFileManager.GetUOFilePath("skills.mul");
+            string pathidx = UOFileManager.GetUOFilePath("Skills.idx");
+
+            FileSystemHelper.EnsureFileExists(path);
+            FileSystemHelper.EnsureFileExists(pathidx);
+
+            _file = new UOFileMul(path, pathidx, 0, 16);
+            _file.FillEntries(ref Entries);
+
+            for (int i = 0, count = 0; i < Entries.Length; i++)
+            {
+                ref UOFileIndex entry = ref GetValidRefEntry(i);
+
+                if (entry.Length > 0)
                 {
-                    if (SkillsCount > 0)
-                    {
-                        return;
-                    }
+                    _file.SetData(entry.Address, entry.FileSize);
+                    _file.Seek(entry.Offset);
 
-                    string path = UOFileManager.GetUOFilePath("skills.mul");
-                    string pathidx = UOFileManager.GetUOFilePath("Skills.idx");
+                    bool hasAction = _file.ReadBool();
+                    string name = Encoding.UTF8.GetString((byte*)_file.PositionAddress, entry.Length - 1).TrimEnd('\0');
 
-                    FileSystemHelper.EnsureFileExists(path);
-                    FileSystemHelper.EnsureFileExists(pathidx);
-
-                    _file = new UOFileMul(path, pathidx, 0, 16);
-                    _file.FillEntries(ref Entries);
-
-                    for (int i = 0, count = 0; i < Entries.Length; i++)
-                    {
-                        ref UOFileIndex entry = ref GetValidRefEntry(i);
-
-                        if (entry.Length > 0)
-                        {
-                            _file.SetData(entry.Address, entry.FileSize);
-                            _file.Seek(entry.Offset);
-                          
-                            bool hasAction = _file.ReadBool();
-                            string name = Encoding.UTF8.GetString((byte*)_file.PositionAddress, entry.Length - 1).TrimEnd('\0');
-
-                            Skills.Add(new SkillEntry(count++, name, hasAction));
-                        }
-                    }
-
-                    SortedSkills.AddRange(Skills);
-                    SortedSkills.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.InvariantCulture));
+                    Skills.Add(new SkillEntry(count++, name, hasAction));
                 }
-            );
+            }
+
+            SortedSkills.AddRange(Skills);
+            SortedSkills.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.InvariantCulture));
+
         }
 
         public int GetSortedIndex(int index)

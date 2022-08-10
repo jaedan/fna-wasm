@@ -91,397 +91,397 @@ namespace ClassicUO.IO
             switch (command)
             {
                 case 0xFF: //hash query, for the blocks around us
-                {
-                    if (_UL == null || p.Length < 15)
                     {
-                        return;
-                    }
-
-                    p.Seek(3);
-                    int block = (int) p.ReadUInt32BE();
-                    p.Seek(14);
-                    int mapId = p.ReadUInt8();
-
-                    if (mapId >= _UL._filesMap.Length)
-                    {
-                        if (Time.Ticks >= _UL._SentWarning)
+                        if (_UL == null || p.Length < 15)
                         {
-                            Log.Trace($"The server is requesting access to MAP: {mapId} but we only have {_UL._filesMap.Length} maps!");
-
-                            _UL._SentWarning = Time.Ticks + 100000;
+                            return;
                         }
 
-                        return;
-                    }
+                        p.Seek(3);
+                        int block = (int)p.ReadUInt32BE();
+                        p.Seek(14);
+                        int mapId = p.ReadUInt8();
 
-                    if (World.Map == null || mapId != World.Map.Index)
-                    {
-                        return;
-                    }
-
-                    int mapWidthInBlocks = MapLoader.Instance.MapBlocksSize[mapId, 0];
-                    int mapHeightInBlocks = MapLoader.Instance.MapBlocksSize[mapId, 1];
-                    int blocks = mapWidthInBlocks * mapHeightInBlocks;
-
-                    if (block < 0 || block >= blocks)
-                    {
-                        return;
-                    }
-
-                    if (_UL.MapCRCs[mapId] == null)
-                    {
-                        _UL.MapCRCs[mapId] = new ushort[blocks];
-
-                        for (int j = 0; j < blocks; j++)
+                        if (mapId >= _UL._filesMap.Length)
                         {
-                            _UL.MapCRCs[mapId][j] = ushort.MaxValue;
-                        }
-                    }
-
-                    int blockX = block / mapHeightInBlocks;
-                    int blockY = block % mapHeightInBlocks;
-
-                    //this will avoid going OVER the wrapsize, so that we have the ILLUSION of never going over the main world
-                    mapWidthInBlocks = blockX < _UL.MapSizeWrapSize[mapId, 2] >> 3 ? _UL.MapSizeWrapSize[mapId, 2] >> 3 : mapWidthInBlocks;
-
-                    mapHeightInBlocks = blockY < _UL.MapSizeWrapSize[mapId, 3] >> 3 ? _UL.MapSizeWrapSize[mapId, 3] >> 3 : mapHeightInBlocks;
-
-                    ushort[] checkSumsToBeSent = new ushort[CRC_LENGTH]; //byte 015 through 64   -  25 block CRCs
-
-                    for (int x = -2; x <= 2; x++)
-                    {
-                        int xBlockItr = (blockX + x) % mapWidthInBlocks;
-
-                        if (xBlockItr < 0 && xBlockItr > -3)
-                        {
-                            xBlockItr += mapWidthInBlocks;
-                        }
-
-                        for (int y = -2; y <= 2; y++)
-                        {
-                            int yBlockItr = (blockY + y) % mapHeightInBlocks;
-
-                            if (yBlockItr < 0)
+                            if (Time.Ticks >= _UL._SentWarning)
                             {
-                                yBlockItr += mapHeightInBlocks;
+                                Log.Trace($"The server is requesting access to MAP: {mapId} but we only have {_UL._filesMap.Length} maps!");
+
+                                _UL._SentWarning = Time.Ticks + 100000;
                             }
 
-                            uint blockNumber = (uint) (xBlockItr * mapHeightInBlocks + yBlockItr);
+                            return;
+                        }
 
-                            if (blockNumber < blocks)
+                        if (World.Map == null || mapId != World.Map.Index)
+                        {
+                            return;
+                        }
+
+                        int mapWidthInBlocks = MapLoader.Instance.MapBlocksSize[mapId, 0];
+                        int mapHeightInBlocks = MapLoader.Instance.MapBlocksSize[mapId, 1];
+                        int blocks = mapWidthInBlocks * mapHeightInBlocks;
+
+                        if (block < 0 || block >= blocks)
+                        {
+                            return;
+                        }
+
+                        if (_UL.MapCRCs[mapId] == null)
+                        {
+                            _UL.MapCRCs[mapId] = new ushort[blocks];
+
+                            for (int j = 0; j < blocks; j++)
                             {
-                                ushort crc = _UL.MapCRCs[mapId][blockNumber];
+                                _UL.MapCRCs[mapId][j] = ushort.MaxValue;
+                            }
+                        }
 
-                                if (crc == ushort.MaxValue)
+                        int blockX = block / mapHeightInBlocks;
+                        int blockY = block % mapHeightInBlocks;
+
+                        //this will avoid going OVER the wrapsize, so that we have the ILLUSION of never going over the main world
+                        mapWidthInBlocks = blockX < _UL.MapSizeWrapSize[mapId, 2] >> 3 ? _UL.MapSizeWrapSize[mapId, 2] >> 3 : mapWidthInBlocks;
+
+                        mapHeightInBlocks = blockY < _UL.MapSizeWrapSize[mapId, 3] >> 3 ? _UL.MapSizeWrapSize[mapId, 3] >> 3 : mapHeightInBlocks;
+
+                        ushort[] checkSumsToBeSent = new ushort[CRC_LENGTH]; //byte 015 through 64   -  25 block CRCs
+
+                        for (int x = -2; x <= 2; x++)
+                        {
+                            int xBlockItr = (blockX + x) % mapWidthInBlocks;
+
+                            if (xBlockItr < 0 && xBlockItr > -3)
+                            {
+                                xBlockItr += mapWidthInBlocks;
+                            }
+
+                            for (int y = -2; y <= 2; y++)
+                            {
+                                int yBlockItr = (blockY + y) % mapHeightInBlocks;
+
+                                if (yBlockItr < 0)
                                 {
-                                    if (xBlockItr >= mapWidthInBlocks || yBlockItr >= mapHeightInBlocks)
-                                    {
-                                        crc = 0;
-                                    }
-                                    else
-                                    {
-                                        crc = GetBlockCrc(blockNumber);
-                                    }
-
-                                    _UL.MapCRCs[mapId][blockNumber] = crc;
+                                    yBlockItr += mapHeightInBlocks;
                                 }
 
-                                checkSumsToBeSent[(x + 2) * 5 + y + 2] = crc;
-                            }
-                            else
-                            {
-                                checkSumsToBeSent[(x + 2) * 5 + y + 2] = 0;
+                                uint blockNumber = (uint)(xBlockItr * mapHeightInBlocks + yBlockItr);
+
+                                if (blockNumber < blocks)
+                                {
+                                    ushort crc = _UL.MapCRCs[mapId][blockNumber];
+
+                                    if (crc == ushort.MaxValue)
+                                    {
+                                        if (xBlockItr >= mapWidthInBlocks || yBlockItr >= mapHeightInBlocks)
+                                        {
+                                            crc = 0;
+                                        }
+                                        else
+                                        {
+                                            crc = GetBlockCrc(blockNumber);
+                                        }
+
+                                        _UL.MapCRCs[mapId][blockNumber] = crc;
+                                    }
+
+                                    checkSumsToBeSent[(x + 2) * 5 + y + 2] = crc;
+                                }
+                                else
+                                {
+                                    checkSumsToBeSent[(x + 2) * 5 + y + 2] = 0;
+                                }
                             }
                         }
+
+                        NetClient.Socket.Send_UOLive_HashResponse((uint)block, (byte)mapId, checkSumsToBeSent.AsSpan(0, CRC_LENGTH));
+
+                        break;
                     }
-
-                    NetClient.Socket.Send_UOLive_HashResponse((uint) block, (byte) mapId, checkSumsToBeSent.AsSpan(0, CRC_LENGTH));
-
-                    break;
-                }
 
                 case 0x00: //statics update
-                {
-                    if (_UL == null || p.Length < 15)
                     {
-                        return;
-                    }
-
-                    p.Seek(3);
-                    int block = (int) p.ReadUInt32BE();
-                    int length = (int) p.ReadUInt32BE();
-                    int totalLength = length * 7;
-
-                    if (p.Length < totalLength + 15)
-                    {
-                        return;
-                    }
-
-                    p.Seek(14);
-                    int mapId = p.ReadUInt8();
-
-                    if (mapId >= _UL._filesMap.Length)
-                    {
-                        if (Time.Ticks >= _UL._SentWarning)
+                        if (_UL == null || p.Length < 15)
                         {
-                            Log.Trace($"The server is requesting access to MAP: {mapId} but we only have {_UL._filesMap.Length} maps!");
-
-                            _UL._SentWarning = Time.Ticks + 100000;
+                            return;
                         }
 
-                        return;
-                    }
+                        p.Seek(3);
+                        int block = (int)p.ReadUInt32BE();
+                        int length = (int)p.ReadUInt32BE();
+                        int totalLength = length * 7;
 
-                    if (World.Map == null || mapId != World.Map.Index)
-                    {
-                        return;
-                    }
-
-                    // TODO(andrea): using a struct range instead of allocate the array to the heap?
-                    byte[] staticsData = new byte[totalLength];
-
-                    p.Read(staticsData, 0, totalLength);
-
-
-                    if (block >= 0 && block < MapLoader.Instance.MapBlocksSize[mapId, 0] * MapLoader.Instance.MapBlocksSize[mapId, 1])
-                    {
-                        int index = block * 12;
-
-                        if (totalLength <= 0)
+                        if (p.Length < totalLength + 15)
                         {
-                            //update index lookup AND static size on disk (first 4 bytes lookup, next 4 is statics size)
-                            _UL._filesIdxStatics[mapId].WriteArray(index, new byte[8] { 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00 });
-
-                            Log.Trace($"writing zero length statics to index at 0x{index:X8}");
+                            return;
                         }
-                        else
+
+                        p.Seek(14);
+                        int mapId = p.ReadUInt8();
+
+                        if (mapId >= _UL._filesMap.Length)
                         {
-                            _UL._filesIdxStatics[mapId].Seek(index);
-
-                            uint lookup = _UL._filesIdxStatics[mapId].ReadUInt();
-
-                            uint existingStaticsLength = _UL._filesIdxStatics[mapId].ReadUInt();
-
-                            //Do we have enough room to write the statics into the existing location?
-                            if (existingStaticsLength >= totalLength && lookup != 0xFFFFFFFF)
+                            if (Time.Ticks >= _UL._SentWarning)
                             {
-                                Log.Trace($"writing statics to existing file location at 0x{lookup:X8}, length:{totalLength}");
+                                Log.Trace($"The server is requesting access to MAP: {mapId} but we only have {_UL._filesMap.Length} maps!");
+
+                                _UL._SentWarning = Time.Ticks + 100000;
+                            }
+
+                            return;
+                        }
+
+                        if (World.Map == null || mapId != World.Map.Index)
+                        {
+                            return;
+                        }
+
+                        // TODO(andrea): using a struct range instead of allocate the array to the heap?
+                        byte[] staticsData = new byte[totalLength];
+
+                        p.Read(staticsData, 0, totalLength);
+
+
+                        if (block >= 0 && block < MapLoader.Instance.MapBlocksSize[mapId, 0] * MapLoader.Instance.MapBlocksSize[mapId, 1])
+                        {
+                            int index = block * 12;
+
+                            if (totalLength <= 0)
+                            {
+                                //update index lookup AND static size on disk (first 4 bytes lookup, next 4 is statics size)
+                                _UL._filesIdxStatics[mapId].WriteArray(index, new byte[8] { 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00 });
+
+                                Log.Trace($"writing zero length statics to index at 0x{index:X8}");
                             }
                             else
                             {
-                                lookup = _UL._EOF[mapId];
-                                _UL._EOF[mapId] += (uint) totalLength;
-                                Log.Trace($"writing statics to end of file at 0x{lookup:X8}, length:{totalLength}");
-                            }
+                                _UL._filesIdxStatics[mapId].Seek(index);
 
-                            _UL._filesStatics[mapId].WriteArray(lookup, staticsData);
+                                uint lookup = _UL._filesIdxStatics[mapId].ReadUInt();
 
-                            _UL._writequeue.Enqueue((mapId, lookup, staticsData));
+                                uint existingStaticsLength = _UL._filesIdxStatics[mapId].ReadUInt();
 
-                            // TODO: stackalloc
-                            //update lookup AND index length on disk
-                            byte[] idxData = new byte[8];
-                            idxData[0] = (byte) lookup;
-                            idxData[1] = (byte) (lookup >> 8);
-                            idxData[2] = (byte) (lookup >> 16);
-                            idxData[3] = (byte) (lookup >> 24);
-                            idxData[4] = (byte) totalLength;
-                            idxData[5] = (byte) (totalLength >> 8);
-                            idxData[6] = (byte) (totalLength >> 16);
-                            idxData[7] = (byte) (totalLength >> 24);
-
-                            //update lookup AND index length on disk
-                            _UL._filesIdxStatics[mapId].WriteArray(block * 12, idxData);
-
-                            Chunk mapChunk = World.Map.GetChunk(block);
-
-                            if (mapChunk == null)
-                            {
-                                return;
-                            }
-
-                            LinkedList<int> linkedList = mapChunk.Node?.List;
-                            List<GameObject> gameObjects = new List<GameObject>();
-
-                            for (int x = 0; x < 8; x++)
-                            {
-                                for (int y = 0; y < 8; y++)
+                                //Do we have enough room to write the statics into the existing location?
+                                if (existingStaticsLength >= totalLength && lookup != 0xFFFFFFFF)
                                 {
-                                    GameObject gameObject = mapChunk.GetHeadObject(x, y);
+                                    Log.Trace($"writing statics to existing file location at 0x{lookup:X8}, length:{totalLength}");
+                                }
+                                else
+                                {
+                                    lookup = _UL._EOF[mapId];
+                                    _UL._EOF[mapId] += (uint)totalLength;
+                                    Log.Trace($"writing statics to end of file at 0x{lookup:X8}, length:{totalLength}");
+                                }
 
-                                    while (gameObject != null)
+                                _UL._filesStatics[mapId].WriteArray(lookup, staticsData);
+
+                                _UL._writequeue.Enqueue((mapId, lookup, staticsData));
+
+                                // TODO: stackalloc
+                                //update lookup AND index length on disk
+                                byte[] idxData = new byte[8];
+                                idxData[0] = (byte)lookup;
+                                idxData[1] = (byte)(lookup >> 8);
+                                idxData[2] = (byte)(lookup >> 16);
+                                idxData[3] = (byte)(lookup >> 24);
+                                idxData[4] = (byte)totalLength;
+                                idxData[5] = (byte)(totalLength >> 8);
+                                idxData[6] = (byte)(totalLength >> 16);
+                                idxData[7] = (byte)(totalLength >> 24);
+
+                                //update lookup AND index length on disk
+                                _UL._filesIdxStatics[mapId].WriteArray(block * 12, idxData);
+
+                                Chunk mapChunk = World.Map.GetChunk(block);
+
+                                if (mapChunk == null)
+                                {
+                                    return;
+                                }
+
+                                LinkedList<int> linkedList = mapChunk.Node?.List;
+                                List<GameObject> gameObjects = new List<GameObject>();
+
+                                for (int x = 0; x < 8; x++)
+                                {
+                                    for (int y = 0; y < 8; y++)
                                     {
-                                        GameObject currentGameObject = gameObject;
-                                        gameObject = gameObject.TNext;
+                                        GameObject gameObject = mapChunk.GetHeadObject(x, y);
 
-                                        if (!(currentGameObject is Land) && !(currentGameObject is Static))
+                                        while (gameObject != null)
                                         {
-                                            gameObjects.Add(currentGameObject);
-                                            currentGameObject.RemoveFromTile();
+                                            GameObject currentGameObject = gameObject;
+                                            gameObject = gameObject.TNext;
+
+                                            if (!(currentGameObject is Land) && !(currentGameObject is Static))
+                                            {
+                                                gameObjects.Add(currentGameObject);
+                                                currentGameObject.RemoveFromTile();
+                                            }
                                         }
                                     }
                                 }
+
+                                mapChunk.Clear();
+                                _UL._ULMap.ReloadBlock(mapId, block);
+                                mapChunk.Load(mapId);
+
+                                //linkedList?.AddLast(c.Node);
+
+                                foreach (GameObject gameObject in gameObjects)
+                                {
+                                    mapChunk.AddGameObject(gameObject, gameObject.X % 8, gameObject.Y % 8);
+                                }
                             }
 
-                            mapChunk.Clear();
-                            _UL._ULMap.ReloadBlock(mapId, block);
-                            mapChunk.Load(mapId);
 
-                            //linkedList?.AddLast(c.Node);
+                            UIManager.GetGump<MiniMapGump>()?.RequestUpdateContents();
 
-                            foreach (GameObject gameObject in gameObjects)
+                            //UIManager.GetGump<WorldMapGump>()?.UpdateMap();
+                            //instead of recalculating the CRC block 2 times, in case of terrain + statics update, we only set the actual block to ushort maxvalue, so it will be recalculated on next hash query
+                            //also the server should always send FIRST the landdata packet, and only AFTER land the statics packet
+                            _UL.MapCRCs[mapId][block] = ushort.MaxValue;
+                        }
+
+                        break;
+                    }
+
+                case 0x01: //map definition update
+                    {
+                        if (_UL == null)
+                        {
+                            return;
+                        }
+
+                        if (string.IsNullOrEmpty(_UL.ShardName) || p.Length < 15)
+                        {
+                            //we cannot validate the pathfolder or packet is not correct
+                            return;
+                        }
+
+                        if (!Directory.Exists(_UL.ShardName))
+                        {
+                            Directory.CreateDirectory(_UL.ShardName);
+
+                            if (!Directory.Exists(_UL.ShardName))
                             {
-                                mapChunk.AddGameObject(gameObject, gameObject.X % 8, gameObject.Y % 8);
+                                _UL = null;
+
+                                return;
                             }
                         }
 
+                        p.Seek(7);
+                        uint maps = p.ReadUInt32BE() * 7 / 9;
 
-                        UIManager.GetGump<MiniMapGump>()?.RequestUpdateContents();
+                        if (p.Length < maps * 9 + 15) //the packet has padding inside, so it's usually larger or equal than what we expect
+                        {
+                            return;
+                        }
 
-                        //UIManager.GetGump<WorldMapGump>()?.UpdateMap();
-                        //instead of recalculating the CRC block 2 times, in case of terrain + statics update, we only set the actual block to ushort maxvalue, so it will be recalculated on next hash query
-                        //also the server should always send FIRST the landdata packet, and only AFTER land the statics packet
-                        _UL.MapCRCs[mapId][block] = ushort.MaxValue;
+                        /*if (_UL.MapCRCs != null)
+                            oldlen = _UL.MapCRCs.Length;
+                        if (_UL.MapCRCs == null || _UL.MapCRCs.Length < maps)*/
+                        _UL.MapCRCs = new ushort[sbyte.MaxValue][];
+
+                        _UL.MapSizeWrapSize = new ushort[sbyte.MaxValue, 4]; //we always need to reinitialize this, as it could change from login to login even on the same server, in case of map changes (a change could happen on the fly with a client kick or on reboot)
+
+                        p.Seek(15); //byte 15 to end of packet, the map definitions
+                        List<int> validMaps = new List<int>();
+
+                        for (int i = 0; i < maps; i++)
+                        {
+                            int mapNumber = p.ReadUInt8();
+                            validMaps.Add(mapNumber);
+
+                            _UL.MapSizeWrapSize[mapNumber, 0] = Math.Min((ushort)MapLoader.Instance.MapsDefaultSize[0, 0], p.ReadUInt16BE());
+
+                            _UL.MapSizeWrapSize[mapNumber, 1] = Math.Min((ushort)MapLoader.Instance.MapsDefaultSize[0, 1], p.ReadUInt16BE());
+
+                            _UL.MapSizeWrapSize[mapNumber, 2] = Math.Min(p.ReadUInt16BE(), _UL.MapSizeWrapSize[mapNumber, 0]);
+                            _UL.MapSizeWrapSize[mapNumber, 3] = Math.Min(p.ReadUInt16BE(), _UL.MapSizeWrapSize[mapNumber, 1]);
+                        }
+
+                        //previously there were a minor amount of maps
+                        if (_UL._ValidMaps.Count == 0 || validMaps.Count > _UL._ValidMaps.Count || !validMaps.TrueForAll(i => _UL._ValidMaps.Contains(i)))
+                        {
+                            _UL._ValidMaps = validMaps;
+                            Constants.MAPS_COUNT = sbyte.MaxValue;
+                            ULMapLoader mapLoader = new ULMapLoader((uint)Constants.MAPS_COUNT);
+
+                            //for (int i = 0; i < maps; i++)
+                            for (int i = 0; i < validMaps.Count; i++)
+                            {
+                                mapLoader.CheckForShardMapFile(validMaps[i]);
+                            }
+
+                            mapLoader.Load();
+
+                            _UL._ULMap = mapLoader;
+                            _UL._filesMap = new ULFileMul[Constants.MAPS_COUNT];
+                            _UL._filesIdxStatics = new ULFileMul[Constants.MAPS_COUNT];
+                            _UL._filesStatics = new ULFileMul[Constants.MAPS_COUNT];
+                            (UOFile[], UOFileMul[], UOFileMul[]) refs = mapLoader.GetFilesReference;
+
+                            for (int i = 0; i < validMaps.Count; i++)
+                            {
+                                _UL._filesMap[validMaps[i]] = refs.Item1[validMaps[i]] as ULFileMul;
+                                _UL._filesIdxStatics[validMaps[i]] = refs.Item2[validMaps[i]] as ULFileMul;
+                                _UL._filesStatics[validMaps[i]] = refs.Item3[validMaps[i]] as ULFileMul;
+                            }
+
+                            _UL._writequeue = mapLoader._writer._toWrite;
+                        }
+
+                        break;
                     }
 
-                    break;
-                }
-
-                case 0x01: //map definition update
-                {
-                    if (_UL == null)
+                case 0x02: //Live login confirmation
                     {
-                        return;
-                    }
+                        if (p.Length < 43) //fixed size
+                        {
+                            return;
+                        }
 
-                    if (string.IsNullOrEmpty(_UL.ShardName) || p.Length < 15)
-                    {
-                        //we cannot validate the pathfolder or packet is not correct
-                        return;
-                    }
+                        //from byte 0x03 to 0x14 data is unused
+                        p.Seek(15);
+                        string name = ValidatePath(p.ReadASCII());
 
-                    if (!Directory.Exists(_UL.ShardName))
-                    {
-                        Directory.CreateDirectory(_UL.ShardName);
-
-                        if (!Directory.Exists(_UL.ShardName))
+                        if (string.IsNullOrWhiteSpace(name))
                         {
                             _UL = null;
 
                             return;
                         }
-                    }
 
-                    p.Seek(7);
-                    uint maps = p.ReadUInt32BE() * 7 / 9;
-
-                    if (p.Length < maps * 9 + 15) //the packet has padding inside, so it's usually larger or equal than what we expect
-                    {
-                        return;
-                    }
-
-                    /*if (_UL.MapCRCs != null)
-                        oldlen = _UL.MapCRCs.Length;
-                    if (_UL.MapCRCs == null || _UL.MapCRCs.Length < maps)*/
-                    _UL.MapCRCs = new ushort[sbyte.MaxValue][];
-
-                    _UL.MapSizeWrapSize = new ushort[sbyte.MaxValue, 4]; //we always need to reinitialize this, as it could change from login to login even on the same server, in case of map changes (a change could happen on the fly with a client kick or on reboot)
-
-                    p.Seek(15); //byte 15 to end of packet, the map definitions
-                    List<int> validMaps = new List<int>();
-
-                    for (int i = 0; i < maps; i++)
-                    {
-                        int mapNumber = p.ReadUInt8();
-                        validMaps.Add(mapNumber);
-
-                        _UL.MapSizeWrapSize[mapNumber, 0] = Math.Min((ushort) MapLoader.Instance.MapsDefaultSize[0, 0], p.ReadUInt16BE());
-
-                        _UL.MapSizeWrapSize[mapNumber, 1] = Math.Min((ushort) MapLoader.Instance.MapsDefaultSize[0, 1], p.ReadUInt16BE());
-
-                        _UL.MapSizeWrapSize[mapNumber, 2] = Math.Min(p.ReadUInt16BE(), _UL.MapSizeWrapSize[mapNumber, 0]);
-                        _UL.MapSizeWrapSize[mapNumber, 3] = Math.Min(p.ReadUInt16BE(), _UL.MapSizeWrapSize[mapNumber, 1]);
-                    }
-
-                    //previously there were a minor amount of maps
-                    if (_UL._ValidMaps.Count == 0 || validMaps.Count > _UL._ValidMaps.Count || !validMaps.TrueForAll(i => _UL._ValidMaps.Contains(i)))
-                    {
-                        _UL._ValidMaps = validMaps;
-                        Constants.MAPS_COUNT = sbyte.MaxValue;
-                        ULMapLoader mapLoader = new ULMapLoader((uint) Constants.MAPS_COUNT);
-
-                        //for (int i = 0; i < maps; i++)
-                        for (int i = 0; i < validMaps.Count; i++)
+                        if (_UL != null && _UL.ShardName == name)
                         {
-                            mapLoader.CheckForShardMapFile(validMaps[i]);
+                            return;
                         }
 
-                        mapLoader.Load().Wait();
+                        string[] split = name.Split(_pathSeparatorChars, StringSplitOptions.RemoveEmptyEntries);
 
-                        _UL._ULMap = mapLoader;
-                        _UL._filesMap = new ULFileMul[Constants.MAPS_COUNT];
-                        _UL._filesIdxStatics = new ULFileMul[Constants.MAPS_COUNT];
-                        _UL._filesStatics = new ULFileMul[Constants.MAPS_COUNT];
-                        (UOFile[], UOFileMul[], UOFileMul[]) refs = mapLoader.GetFilesReference;
-
-                        for (int i = 0; i < validMaps.Count; i++)
+                        _UL = new UltimaLive
                         {
-                            _UL._filesMap[validMaps[i]] = refs.Item1[validMaps[i]] as ULFileMul;
-                            _UL._filesIdxStatics[validMaps[i]] = refs.Item2[validMaps[i]] as ULFileMul;
-                            _UL._filesStatics[validMaps[i]] = refs.Item3[validMaps[i]] as ULFileMul;
-                        }
+                            ShardName = name,
+                            RealShardName = split[split.Length - 1]
+                        };
 
-                        _UL._writequeue = mapLoader._writer._toWrite;
-                    }
-
-                    break;
-                }
-
-                case 0x02: //Live login confirmation
-                {
-                    if (p.Length < 43) //fixed size
-                    {
-                        return;
-                    }
-
-                    //from byte 0x03 to 0x14 data is unused
-                    p.Seek(15);
-                    string name = ValidatePath(p.ReadASCII());
-
-                    if (string.IsNullOrWhiteSpace(name))
-                    {
-                        _UL = null;
-
-                        return;
-                    }
-
-                    if (_UL != null && _UL.ShardName == name)
-                    {
-                        return;
-                    }
-
-                    string[] split = name.Split(_pathSeparatorChars, StringSplitOptions.RemoveEmptyEntries);
-
-                    _UL = new UltimaLive
-                    {
-                        ShardName = name,
-                        RealShardName = split[split.Length - 1]
-                    };
-
-                    //TODO: create shard directory, copy map and statics to that directory, use that files instead of the original ones
-                    break;
-                }
-
-                /*case 0x03://Refresh client VIEW - after an update the server will usually send this packet to refresh the client view, this packet has been discontinued after ultimalive 0.96 and isn't necessary anymore
-                    {
+                        //TODO: create shard directory, copy map and statics to that directory, use that files instead of the original ones
                         break;
-                    }*/
+                    }
+
+                    /*case 0x03://Refresh client VIEW - after an update the server will usually send this packet to refresh the client view, this packet has been discontinued after ultimalive 0.96 and isn't necessary anymore
+                        {
+                            break;
+                        }*/
             }
         }
 
         private static void OnUpdateTerrainPacket(ref StackDataReader p)
         {
-            int block = (int) p.ReadUInt32BE();
+            int block = (int)p.ReadUInt32BE();
             // TODO: stackalloc
             byte[] landData = new byte[LAND_BLOCK_LENGTH];
 
@@ -498,8 +498,8 @@ namespace ClassicUO.IO
                 return;
             }
 
-            ushort mapWidthInBlocks = (ushort) MapLoader.Instance.MapBlocksSize[mapId, 0];
-            ushort mapHeightInBlocks = (ushort) MapLoader.Instance.MapBlocksSize[mapId, 1];
+            ushort mapWidthInBlocks = (ushort)MapLoader.Instance.MapBlocksSize[mapId, 0];
+            ushort mapHeightInBlocks = (ushort)MapLoader.Instance.MapBlocksSize[mapId, 1];
 
             if (block >= 0 && block < mapWidthInBlocks * mapHeightInBlocks)
             {
@@ -621,11 +621,11 @@ namespace ClassicUO.IO
 
             for (index = 0; index < data.Length; index++)
             {
-                sum1 = (ushort) ((sum1 + data[index]) % 255);
-                sum2 = (ushort) ((sum2 + sum1) % 255);
+                sum1 = (ushort)((sum1 + data[index]) % 255);
+                sum2 = (ushort)((sum2 + sum1) % 255);
             }
 
-            return (ushort) ((sum2 << 8) | sum1);
+            return (ushort)((sum2 << 8) | sum1);
         }
 
         private static string ValidatePath(string shardName)
@@ -653,7 +653,7 @@ namespace ClassicUO.IO
             //since we are using only ascii (8bit) charset, send only normal letters! in this case we return null and invalidate ultimalive request
             return null;
         }
-        
+
         private class ULFileMul : UOFileMul
         {
             public ULFileMul(string file, bool isStaticMul) : base(file)
@@ -674,7 +674,7 @@ namespace ClassicUO.IO
                     throw new FileNotFoundException(fileInfo.FullName);
                 }
 
-                uint size = (uint) fileInfo.Length;
+                uint size = (uint)fileInfo.Length;
                 Log.Trace($"UltimaLive -> ReLoading file:\t{FilePath}");
 
                 if (size > 0 || isStaticMul) //if new map is generated automatically, staticX.mul size is equal to ZERO, other files should always be major than zero!
@@ -729,7 +729,7 @@ namespace ClassicUO.IO
                     try
                     {
                         _accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
-                        SetData(ptr, (long) _accessor.SafeMemoryMappedViewHandle.ByteLength);
+                        SetData(ptr, (long)_accessor.SafeMemoryMappedViewHandle.ByteLength);
                     }
                     catch
                     {
@@ -835,75 +835,71 @@ namespace ClassicUO.IO
                 }
             }
 
-            public override Task Load()
+            public override void Load()
             {
-                return Task.Run
-                (
-                    () =>
+
+                if (Instance is ULMapLoader)
+                {
+                    return;
+                }
+
+                UOFileManager.MapLoaderReLoad(this);
+                _UL._EOF = new uint[NumMaps];
+                _filesStaticsStream = new FileStream[NumMaps];
+                bool foundOneMap = false;
+
+                for (int x = 0; x < _UL._ValidMaps.Count; x++)
+                {
+                    int i = _UL._ValidMaps[x];
+                    string path = Path.Combine(_UL.ShardName, $"map{i}.mul");
+
+                    if (File.Exists(path))
                     {
-                        if (Instance is ULMapLoader)
-                        {
-                            return;
-                        }
-
-                        UOFileManager.MapLoaderReLoad(this);
-                        _UL._EOF = new uint[NumMaps];
-                        _filesStaticsStream = new FileStream[NumMaps];
-                        bool foundOneMap = false;
-
-                        for (int x = 0; x < _UL._ValidMaps.Count; x++)
-                        {
-                            int i = _UL._ValidMaps[x];
-                            string path = Path.Combine(_UL.ShardName, $"map{i}.mul");
-
-                            if (File.Exists(path))
-                            {
-                                _filesMap[i] = new ULFileMul(path, false);
-                                foundOneMap = true;
-                            }
-
-                            path = Path.Combine(_UL.ShardName, $"statics{i}.mul");
-
-                            if (!File.Exists(path))
-                            {
-                                foundOneMap = false;
-
-                                break;
-                            }
-
-                            _filesStatics[i] = new ULFileMul(path, true);
-
-                            _filesStaticsStream[i] = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
-
-                            _UL._EOF[i] = (uint) new FileInfo(path).Length;
-
-                            path = Path.Combine(_UL.ShardName, $"staidx{i}.mul");
-
-                            if (!File.Exists(path))
-                            {
-                                foundOneMap = false;
-
-                                break;
-                            }
-
-                            _filesIdxStatics[i] = new ULFileMul(path, false);
-                        }
-
-                        if (!foundOneMap)
-                        {
-                            throw new FileNotFoundException($"No maps, staidx or statics found on {_UL.ShardName}.");
-                        }
-
-                        for (int x = 0; x < _UL._ValidMaps.Count; x++)
-                        {
-                            int i = _UL._ValidMaps[x];
-                            MapBlocksSize[i, 0] = MapsDefaultSize[i, 0] >> 3;
-                            MapBlocksSize[i, 1] = MapsDefaultSize[i, 1] >> 3;
-                            //on ultimalive map always preload
-                            LoadMap(i);
-                        }
+                        _filesMap[i] = new ULFileMul(path, false);
+                        foundOneMap = true;
                     }
-                );
+
+                    path = Path.Combine(_UL.ShardName, $"statics{i}.mul");
+
+                    if (!File.Exists(path))
+                    {
+                        foundOneMap = false;
+
+                        break;
+                    }
+
+                    _filesStatics[i] = new ULFileMul(path, true);
+
+                    _filesStaticsStream[i] = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+
+                    _UL._EOF[i] = (uint)new FileInfo(path).Length;
+
+                    path = Path.Combine(_UL.ShardName, $"staidx{i}.mul");
+
+                    if (!File.Exists(path))
+                    {
+                        foundOneMap = false;
+
+                        break;
+                    }
+
+                    _filesIdxStatics[i] = new ULFileMul(path, false);
+                }
+
+                if (!foundOneMap)
+                {
+                    throw new FileNotFoundException($"No maps, staidx or statics found on {_UL.ShardName}.");
+                }
+
+                for (int x = 0; x < _UL._ValidMaps.Count; x++)
+                {
+                    int i = _UL._ValidMaps[x];
+                    MapBlocksSize[i, 0] = MapsDefaultSize[i, 0] >> 3;
+                    MapBlocksSize[i, 1] = MapsDefaultSize[i, 1] >> 3;
+                    //on ultimalive map always preload
+                    LoadMap(i);
+                }
+
             }
 
             internal void CheckForShardMapFile(int mapId)
@@ -1083,12 +1079,12 @@ namespace ClassicUO.IO
                 UOFile file = _filesMap[map];
                 UOFile fileIdx = _filesIdxStatics[map];
                 UOFile staticFile = _filesStatics[map];
-                ulong staticIdxAddress = (ulong) fileIdx.StartAddress;
-                ulong endStaticIdxAddress = staticIdxAddress + (ulong) fileIdx.Length;
-                ulong staticAddress = (ulong) staticFile.StartAddress;
-                ulong endStaticAddress = staticAddress + (ulong) staticFile.Length;
-                ulong mapAddress = (ulong) file.StartAddress;
-                ulong endMapAddress = mapAddress + (ulong) file.Length;
+                ulong staticIdxAddress = (ulong)fileIdx.StartAddress;
+                ulong endStaticIdxAddress = staticIdxAddress + (ulong)fileIdx.Length;
+                ulong staticAddress = (ulong)staticFile.StartAddress;
+                ulong endStaticAddress = staticAddress + (ulong)staticFile.Length;
+                ulong mapAddress = (ulong)file.StartAddress;
+                ulong endMapAddress = mapAddress + (ulong)file.Length;
                 ulong uopOffset = 0;
                 int fileNumber = -1;
                 bool isUop = file is UOFileUop;
@@ -1108,20 +1104,20 @@ namespace ClassicUO.IO
 
                         if (shifted < Entries.Length)
                         {
-                            uopOffset = (ulong) Entries[map][shifted].Offset;
+                            uopOffset = (ulong)Entries[map][shifted].Offset;
                         }
                     }
                 }
 
-                ulong address = mapAddress + uopOffset + (ulong) (blockNumber * mapBlockSize);
+                ulong address = mapAddress + uopOffset + (ulong)(blockNumber * mapBlockSize);
 
                 if (address < endMapAddress)
                 {
                     realMapAddress = address;
                 }
 
-                ulong stidxaddress = staticIdxAddress + (ulong) (block * staticIdxBlockSize);
-                StaidxBlock* bb = (StaidxBlock*) stidxaddress;
+                ulong stidxaddress = staticIdxAddress + (ulong)(block * staticIdxBlockSize);
+                StaidxBlock* bb = (StaidxBlock*)stidxaddress;
 
                 if (stidxaddress < endStaticIdxAddress && bb->Size > 0 && bb->Position != 0xFFFFFFFF)
                 {
@@ -1130,7 +1126,7 @@ namespace ClassicUO.IO
                     if (address1 < endStaticAddress)
                     {
                         realStaticAddress = address1;
-                        realStaticCount = (uint) (bb->Size / staticblockSize);
+                        realStaticCount = (uint)(bb->Size / staticblockSize);
 
                         if (realStaticCount > 1024)
                         {

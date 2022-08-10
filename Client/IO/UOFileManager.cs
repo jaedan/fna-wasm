@@ -91,30 +91,71 @@ namespace ClassicUO.IO
 
             UOFilesOverrideMap.Instance.Load(); // need to load this first so that it manages can perform the file overrides if needed
 
-            List<Task> tasks = new List<Task>
-            {
-                AnimationsLoader.Instance.Load(),
-                AnimDataLoader.Instance.Load(),
-                ArtLoader.Instance.Load(),
-                MapLoader.Instance.Load(),
-                ClilocLoader.Instance.Load(Settings.GlobalSettings.Language),
-                GumpsLoader.Instance.Load(),
-                FontsLoader.Instance.Load(),
-                HuesLoader.Instance.Load(),
-                TileDataLoader.Instance.Load(),
-                MultiLoader.Instance.Load(),
-                SkillsLoader.Instance.Load().ContinueWith(t => ProfessionLoader.Instance.Load()),
-                TexmapsLoader.Instance.Load(),
-                SpeechesLoader.Instance.Load(),
-                LightsLoader.Instance.Load(),
-                SoundsLoader.Instance.Load(),
-                MultiMapLoader.Instance.Load()
-            };
+            //List<Task> tasks = new List<Task>
+            //{
+            //    AnimationsLoader.Instance.Load(),
+            //    AnimDataLoader.Instance.Load(),
+            //    ArtLoader.Instance.Load(),
+            //    MapLoader.Instance.Load(),
+            //    ClilocLoader.Instance.Load(Settings.GlobalSettings.Language),
+            //    GumpsLoader.Instance.Load(),
+            //    FontsLoader.Instance.Load(),
+            //    HuesLoader.Instance.Load(),
+            //    TileDataLoader.Instance.Load(),
+            //    MultiLoader.Instance.Load(),
+            //    SkillsLoader.Instance.Load().ContinueWith(t => ProfessionLoader.Instance.Load()),
+            //    TexmapsLoader.Instance.Load(),
+            //    SpeechesLoader.Instance.Load(),
+            //    LightsLoader.Instance.Load(),
+            //    SoundsLoader.Instance.Load(),
+            //    MultiMapLoader.Instance.Load()
+            //};
 
-            if (!Task.WhenAll(tasks).Wait(TimeSpan.FromSeconds(10)))
-            {
-                Log.Panic("Loading files timeout.");
-            }
+
+            //if (!Task.Run(async() => await Task.WhenAll(tasks)).IsCompletedSuccessfully)
+            //{
+            //    Log.Panic("Loading files timeout.");
+            //}
+
+            //if (!Task.WhenAll(tasks).Wait(TimeSpan.FromSeconds(10)))
+            //{
+            //    Log.Panic("Loading files timeout.");
+            //}
+
+            //Task.Run(async() => await AnimationsLoader.Instance.Load());
+            //Task.Run(async() => await AnimDataLoader.Instance.Load());
+            //Task.Run(async() => await ArtLoader.Instance.Load());
+            //Task.Run(async() => await MapLoader.Instance.Load());
+            //Task.Run(async() => await ClilocLoader.Instance.Load(Settings.GlobalSettings.Language));
+            //Task.Run(async() => await GumpsLoader.Instance.Load());
+            //Task.Run(async() => await FontsLoader.Instance.Load());
+            //Task.Run(async() => await HuesLoader.Instance.Load());
+            //Task.Run(async() => await TileDataLoader.Instance.Load());
+            //Task.Run(async() => await MultiLoader.Instance.Load());
+            //Task.Run(async() => await SkillsLoader.Instance.Load().ContinueWith(t => ProfessionLoader.Instance.Load()));
+            //Task.Run(async() => await TexmapsLoader.Instance.Load());
+            //Task.Run(async() => await SpeechesLoader.Instance.Load());
+            //Task.Run(async() => await LightsLoader.Instance.Load());
+            //Task.Run(async() => await SoundsLoader.Instance.Load());
+            //Task.Run(async() => await MultiMapLoader.Instance.Load());
+
+            AnimationsLoader.Instance.Load();
+            AnimDataLoader.Instance.Load();
+            ArtLoader.Instance.Load();
+            MapLoader.Instance.Load();
+            ClilocLoader.Instance.Load(Settings.GlobalSettings.Language);
+            GumpsLoader.Instance.Load();
+            FontsLoader.Instance.Load();
+            HuesLoader.Instance.Load();
+            TileDataLoader.Instance.Load();
+            MultiLoader.Instance.Load();
+            SkillsLoader.Instance.Load();
+            ProfessionLoader.Instance.Load();
+            TexmapsLoader.Instance.Load();
+            SpeechesLoader.Instance.Load();
+            LightsLoader.Instance.Load();
+            SoundsLoader.Instance.Load();
+            MultiMapLoader.Instance.Load();
 
             Read_Art_def();
 

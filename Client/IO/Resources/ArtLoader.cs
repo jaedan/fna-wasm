@@ -54,40 +54,36 @@ namespace ClassicUO.IO.Resources
 
         private ArtLoader(int staticCount, int landCount)
         {
-            _graphicMask = Client.IsUOPInstallation ? (ushort) 0xFFFF : (ushort) 0x3FFF;
+            _graphicMask = Client.IsUOPInstallation ? (ushort)0xFFFF : (ushort)0x3FFF;
         }
 
         public static ArtLoader Instance => _instance ?? (_instance = new ArtLoader(Constants.MAX_STATIC_DATA_INDEX_COUNT, Constants.MAX_LAND_DATA_INDEX_COUNT));
 
 
-        public override Task Load()
+        public override void Load()
         {
-            return Task.Run
-            (
-                () =>
+
+            string filePath = UOFileManager.GetUOFilePath("artLegacyMUL.uop");
+
+            if (Client.IsUOPInstallation && File.Exists(filePath))
+            {
+                _file = new UOFileUop(filePath, "build/artlegacymul/{0:D8}.tga");
+                Entries = new UOFileIndex[Math.Max(((UOFileUop)_file).TotalEntriesCount, Constants.MAX_STATIC_DATA_INDEX_COUNT)];
+            }
+            else
+            {
+                filePath = UOFileManager.GetUOFilePath("art.mul");
+                string idxPath = UOFileManager.GetUOFilePath("artidx.mul");
+
+                if (File.Exists(filePath) && File.Exists(idxPath))
                 {
-                    string filePath = UOFileManager.GetUOFilePath("artLegacyMUL.uop");
-
-                    if (Client.IsUOPInstallation && File.Exists(filePath))
-                    {
-                        _file = new UOFileUop(filePath, "build/artlegacymul/{0:D8}.tga");
-                        Entries = new UOFileIndex[Math.Max(((UOFileUop) _file).TotalEntriesCount, Constants.MAX_STATIC_DATA_INDEX_COUNT)];
-                    }
-                    else
-                    {
-                        filePath = UOFileManager.GetUOFilePath("art.mul");
-                        string idxPath = UOFileManager.GetUOFilePath("artidx.mul");
-
-                        if (File.Exists(filePath) && File.Exists(idxPath))
-                        {
-                            _file = new UOFileMul(filePath, idxPath, Constants.MAX_STATIC_DATA_INDEX_COUNT);
-                        }
-                    }
-
-                    _file.FillEntries(ref Entries);
-                    _spriteInfos = new SpriteInfo[Entries.Length];
+                    _file = new UOFileMul(filePath, idxPath, Constants.MAX_STATIC_DATA_INDEX_COUNT);
                 }
-            );
+            }
+
+            _file.FillEntries(ref Entries);
+            _spriteInfos = new SpriteInfo[Entries.Length];
+
         }
 
         struct SpriteInfo
@@ -293,13 +289,13 @@ namespace ClassicUO.IO.Resources
                     (
                         pixels,
                         ref entry,
-                        (ushort) index,
+                        (ushort)index,
                         w,
                         h,
                         out _
                     );
 
-                    fixed(uint * ptr = pixels)
+                    fixed (uint* ptr = pixels)
                     {
                         SDL.SDL_Surface* surface = (SDL.SDL_Surface*)SDL.SDL_CreateRGBSurfaceWithFormatFrom
                         (
@@ -371,13 +367,13 @@ namespace ClassicUO.IO.Resources
                     }
                 }
             }
-            
+
             return IntPtr.Zero;
         }
 
         public bool PixelCheck(int index, int x, int y)
         {
-            return _picker.Get((ulong) index, x, y);
+            return _picker.Get((ulong)index, x, y);
         }
 
         private bool ReadHeader(DataReader file, ref UOFileIndex entry, out short width, out short height)

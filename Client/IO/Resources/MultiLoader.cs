@@ -54,37 +54,33 @@ namespace ClassicUO.IO.Resources
         public int Offset { get; private set; }
 
 
-        public override unsafe Task Load()
+        public override unsafe void Load()
         {
-            return Task.Run
-            (
-                () =>
+
+            string uopPath = UOFileManager.GetUOFilePath("MultiCollection.uop");
+
+            if (Client.IsUOPInstallation && System.IO.File.Exists(uopPath))
+            {
+                Count = Constants.MAX_MULTI_DATA_INDEX_COUNT;
+                File = new UOFileUop(uopPath, "build/multicollection/{0:D6}.bin");
+                Entries = new UOFileIndex[Count];
+                IsUOP = true;
+            }
+            else
+            {
+                string path = UOFileManager.GetUOFilePath("multi.mul");
+                string pathidx = UOFileManager.GetUOFilePath("multi.idx");
+
+                if (System.IO.File.Exists(path) && System.IO.File.Exists(pathidx))
                 {
-                    string uopPath = UOFileManager.GetUOFilePath("MultiCollection.uop");
+                    File = new UOFileMul(path, pathidx, Constants.MAX_MULTI_DATA_INDEX_COUNT, 14);
 
-                    if (Client.IsUOPInstallation && System.IO.File.Exists(uopPath))
-                    {
-                        Count = Constants.MAX_MULTI_DATA_INDEX_COUNT;
-                        File = new UOFileUop(uopPath, "build/multicollection/{0:D6}.bin");
-                        Entries = new UOFileIndex[Count];
-                        IsUOP = true;
-                    }
-                    else
-                    {
-                        string path = UOFileManager.GetUOFilePath("multi.mul");
-                        string pathidx = UOFileManager.GetUOFilePath("multi.idx");
-
-                        if (System.IO.File.Exists(path) && System.IO.File.Exists(pathidx))
-                        {
-                            File = new UOFileMul(path, pathidx, Constants.MAX_MULTI_DATA_INDEX_COUNT, 14);
-
-                            Count = Offset = Client.Version >= ClientVersion.CV_7090 ? sizeof(MultiBlockNew) + 2 : sizeof(MultiBlock);
-                        }
-                    }
-
-                    File.FillEntries(ref Entries);
+                    Count = Offset = Client.Version >= ClientVersion.CV_7090 ? sizeof(MultiBlockNew) + 2 : sizeof(MultiBlock);
                 }
-            );
+            }
+
+            File.FillEntries(ref Entries);
+
         }
     }
 

@@ -56,44 +56,40 @@ namespace ClassicUO.IO.Resources
 
         public ushort[] RadarCol { get; private set; }
 
-        public override unsafe Task Load()
+        public override unsafe void Load()
         {
-            return Task.Run
-            (
-                () =>
-                {
-                    string path = UOFileManager.GetUOFilePath("hues.mul");
 
-                    FileSystemHelper.EnsureFileExists(path);
+            string path = UOFileManager.GetUOFilePath("hues.mul");
 
-                    UOFileMul file = new UOFileMul(path);
-                    int groupSize = Marshal.SizeOf<HuesGroup>();
-                    int entrycount = (int) file.Length / groupSize;
-                    HuesCount = entrycount * 8;
-                    HuesRange = new HuesGroup[entrycount];
-                    ulong addr = (ulong) file.StartAddress;
+            FileSystemHelper.EnsureFileExists(path);
 
-                    for (int i = 0; i < entrycount; i++)
-                    {
-                        HuesRange[i] = Marshal.PtrToStructure<HuesGroup>((IntPtr) (addr + (ulong) (i * groupSize)));
-                    }
+            UOFileMul file = new UOFileMul(path);
+            int groupSize = Marshal.SizeOf<HuesGroup>();
+            int entrycount = (int)file.Length / groupSize;
+            HuesCount = entrycount * 8;
+            HuesRange = new HuesGroup[entrycount];
+            ulong addr = (ulong)file.StartAddress;
 
-                    path = UOFileManager.GetUOFilePath("radarcol.mul");
+            for (int i = 0; i < entrycount; i++)
+            {
+                HuesRange[i] = Marshal.PtrToStructure<HuesGroup>((IntPtr)(addr + (ulong)(i * groupSize)));
+            }
 
-                    FileSystemHelper.EnsureFileExists(path);
+            path = UOFileManager.GetUOFilePath("radarcol.mul");
 
-                    UOFileMul radarcol = new UOFileMul(path);
-                    RadarCol = new ushort[(int)(radarcol.Length >> 1)];
+            FileSystemHelper.EnsureFileExists(path);
 
-                    fixed (ushort* ptr = RadarCol)
-                    {
-                        Unsafe.CopyBlockUnaligned((void*)(byte*)ptr, radarcol.PositionAddress.ToPointer(), (uint)radarcol.Length);
-                    }
-                    
-                    file.Dispose();
-                    radarcol.Dispose();
-                }
-            );
+            UOFileMul radarcol = new UOFileMul(path);
+            RadarCol = new ushort[(int)(radarcol.Length >> 1)];
+
+            fixed (ushort* ptr = RadarCol)
+            {
+                Unsafe.CopyBlockUnaligned((void*)(byte*)ptr, radarcol.PositionAddress.ToPointer(), (uint)radarcol.Length);
+            }
+
+            file.Dispose();
+            radarcol.Dispose();
+
         }
 
         public float[] CreateHuesPalette()
@@ -260,9 +256,9 @@ namespace ClassicUO.IO.Resources
                 int e = color % 8;
                 uint cl = HuesHelper.Color16To32(c);
 
-                byte R = (byte) (cl & 0xFF);
-                byte G = (byte) ((cl >> 8) & 0xFF);
-                byte B = (byte) ((cl >> 16) & 0xFF);
+                byte R = (byte)(cl & 0xFF);
+                byte G = (byte)((cl >> 8) & 0xFF);
+                byte B = (byte)((cl >> 16) & 0xFF);
 
                 if (R == G && R == B)
                 {

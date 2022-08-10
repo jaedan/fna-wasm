@@ -53,7 +53,7 @@ namespace ClassicUO.IO.Resources
             public Rectangle UV;
         }
 
-        private LightsLoader(int count) 
+        private LightsLoader(int count)
         {
         }
 
@@ -65,23 +65,19 @@ namespace ClassicUO.IO.Resources
             _atlas = new TextureAtlas(device, 2048, 2048, SurfaceFormat.Color);
         }
 
-        public override Task Load()
+        public override void Load()
         {
-            return Task.Run
-            (
-                () =>
-                {
-                    string path = UOFileManager.GetUOFilePath("light.mul");
-                    string pathidx = UOFileManager.GetUOFilePath("lightidx.mul");
 
-                    FileSystemHelper.EnsureFileExists(path);
-                    FileSystemHelper.EnsureFileExists(pathidx);
+            string path = UOFileManager.GetUOFilePath("light.mul");
+            string pathidx = UOFileManager.GetUOFilePath("lightidx.mul");
 
-                    _file = new UOFileMul(path, pathidx, Constants.MAX_LIGHTS_DATA_INDEX_COUNT);
-                    _file.FillEntries(ref Entries);
-                    _spriteInfos = new SpriteInfo[Entries.Length];
-                }
-            );
+            FileSystemHelper.EnsureFileExists(path);
+            FileSystemHelper.EnsureFileExists(pathidx);
+
+            _file = new UOFileMul(path, pathidx, Constants.MAX_LIGHTS_DATA_INDEX_COUNT);
+            _file.FillEntries(ref Entries);
+            _spriteInfos = new SpriteInfo[Entries.Length];
+
         }
 
         public Texture2D GetLightTexture(uint id, out Rectangle bounds)
@@ -101,7 +97,7 @@ namespace ClassicUO.IO.Resources
 
         private unsafe bool AddSpriteLightToAtlas(TextureAtlas atlas, uint idx)
         {
-            ref UOFileIndex entry = ref GetValidRefEntry((int) idx);
+            ref UOFileIndex entry = ref GetValidRefEntry((int)idx);
 
             if (entry.Width == 0 && entry.Height == 0)
             {
@@ -109,7 +105,7 @@ namespace ClassicUO.IO.Resources
             }
 
             uint[] buffer = null;
-          
+
             Span<uint> pixels = entry.Width * entry.Height <= 1024 ? stackalloc uint[1024] : (buffer = System.Buffers.ArrayPool<uint>.Shared.Rent(entry.Width * entry.Height, true));
 
             try
@@ -129,7 +125,7 @@ namespace ClassicUO.IO.Resources
                         {
                             val = (ushort)(~val & 0x1F);
                         }
-                        uint rgb24 = (uint) ((val << 19) | (val << 11) | (val << 3));
+                        uint rgb24 = (uint)((val << 19) | (val << 11) | (val << 3));
 
                         if (val != 0)
                         {
@@ -147,7 +143,7 @@ namespace ClassicUO.IO.Resources
                 if (buffer != null)
                 {
                     System.Buffers.ArrayPool<uint>.Shared.Return(buffer);
-                }             
+                }
             }
 
             return true;

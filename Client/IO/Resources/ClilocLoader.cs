@@ -53,7 +53,7 @@ namespace ClassicUO.IO.Resources
 
         public static ClilocLoader Instance => _instance ?? (_instance = new ClilocLoader());
 
-        public Task Load(string lang)
+        public void Load(string lang)
         {
             if (string.IsNullOrEmpty(lang))
             {
@@ -70,101 +70,97 @@ namespace ClassicUO.IO.Resources
                 _cliloc = "Cliloc.enu";
             }
 
-            return Load();
+            Load();
         }
 
-        public override Task Load()
+        public override void Load()
         {
-            return Task.Run
-            (
-                () =>
+
+            if (string.IsNullOrEmpty(_cliloc))
+            {
+                _cliloc = "Cliloc.enu";
+            }
+
+            string path = UOFileManager.GetUOFilePath(_cliloc);
+
+            if (!File.Exists(path))
+            {
+                Log.Error($"cliloc not found: '{path}'");
+                return;
+            }
+
+            if (string.Compare(_cliloc, "cliloc.enu", StringComparison.InvariantCultureIgnoreCase) != 0)
+            {
+                string enupath = UOFileManager.GetUOFilePath("Cliloc.enu");
+
+                using (BinaryReader reader = new BinaryReader(new FileStream(enupath, FileMode.Open, FileAccess.Read)))
                 {
-                    if (string.IsNullOrEmpty(_cliloc))
+                    reader.ReadInt32();
+                    reader.ReadInt16();
+
+                    byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(1024);
+
+                    try
                     {
-                        _cliloc = "Cliloc.enu";
-                    }
-
-                    string path = UOFileManager.GetUOFilePath(_cliloc);
-
-                    if (!File.Exists(path))
-                    {
-                        Log.Error($"cliloc not found: '{path}'");
-                        return;
-                    }
-
-                    if (string.Compare(_cliloc, "cliloc.enu", StringComparison.InvariantCultureIgnoreCase) != 0)
-                    { 
-                        string enupath = UOFileManager.GetUOFilePath("Cliloc.enu");
-
-                        using (BinaryReader reader = new BinaryReader(new FileStream(enupath, FileMode.Open, FileAccess.Read)))
+                        while (reader.BaseStream.Length != reader.BaseStream.Position)
                         {
-                            reader.ReadInt32();
-                            reader.ReadInt16();
+                            int number = reader.ReadInt32();
+                            byte flag = reader.ReadByte();
+                            int length = reader.ReadInt16();
 
-                            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(1024);
-
-                            try
-                            {
-                                while (reader.BaseStream.Length != reader.BaseStream.Position)
-                                {
-                                    int number = reader.ReadInt32();
-                                    byte flag = reader.ReadByte();
-                                    int length = reader.ReadInt16();
-
-                                    if (length > buffer.Length)
-                                    {
-                                        System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
-
-                                        buffer = System.Buffers.ArrayPool<byte>.Shared.Rent((length + 1023) & ~1023);
-                                    }
-
-                                    reader.Read(buffer, 0, length);
-                                    string text = string.Intern(Encoding.UTF8.GetString(buffer, 0, length));
-
-                                    _entries[number] = text;
-                                }
-                            }
-                            finally
+                            if (length > buffer.Length)
                             {
                                 System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
+
+                                buffer = System.Buffers.ArrayPool<byte>.Shared.Rent((length + 1023) & ~1023);
                             }
+
+                            reader.Read(buffer, 0, length);
+                            string text = string.Intern(Encoding.UTF8.GetString(buffer, 0, length));
+
+                            _entries[number] = text;
                         }
                     }
-
-                    using (BinaryReader reader = new BinaryReader(new FileStream(path, FileMode.Open, FileAccess.Read)))
+                    finally
                     {
-                        reader.ReadInt32();
-                        reader.ReadInt16();
-                        byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(1024);
-
-                        try
-                        {
-                            while (reader.BaseStream.Length != reader.BaseStream.Position)
-                            {
-                                int number = reader.ReadInt32();
-                                byte flag = reader.ReadByte();
-                                int length = reader.ReadInt16();
-
-                                if (length > buffer.Length)
-                                {
-                                    System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
-
-                                    buffer = System.Buffers.ArrayPool<byte>.Shared.Rent((length + 1023) & ~1023);
-                                }
-
-                                reader.Read(buffer, 0, length);
-                                string text = string.Intern(Encoding.UTF8.GetString(buffer, 0, length));
-
-                                _entries[number] = text;
-                            }
-                        }
-                        finally
-                        {
-                            System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
-                        }
+                        System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
                     }
                 }
-            );
+            }
+
+            using (BinaryReader reader = new BinaryReader(new FileStream(path, FileMode.Open, FileAccess.Read)))
+            {
+                reader.ReadInt32();
+                reader.ReadInt16();
+                byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(1024);
+
+                try
+                {
+                    while (reader.BaseStream.Length != reader.BaseStream.Position)
+                    {
+                        int number = reader.ReadInt32();
+                        byte flag = reader.ReadByte();
+                        int length = reader.ReadInt16();
+
+                        if (length > buffer.Length)
+                        {
+                            System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
+
+                            buffer = System.Buffers.ArrayPool<byte>.Shared.Rent((length + 1023) & ~1023);
+                        }
+
+                        reader.Read(buffer, 0, length);
+                        string text = string.Intern(Encoding.UTF8.GetString(buffer, 0, length));
+
+                        _entries[number] = text;
+                    }
+                }
+                finally
+                {
+                    System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
+                }
+            }
+
         }
 
         public override void ClearResources()

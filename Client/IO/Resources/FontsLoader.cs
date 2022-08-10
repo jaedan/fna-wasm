@@ -107,103 +107,99 @@ namespace ClassicUO.IO.Resources
 
         public bool IsUsingHTML { get; set; }
 
-        public override unsafe Task Load()
+        public override unsafe void Load()
         {
-            return Task.Run
-            (
-                () =>
+
+            UOFileMul fonts = new UOFileMul(UOFileManager.GetUOFilePath("fonts.mul"));
+            UOFileMul[] uniFonts = new UOFileMul[20];
+
+            for (int i = 0; i < 20; i++)
+            {
+                string path = UOFileManager.GetUOFilePath("unifont" + (i == 0 ? "" : i.ToString()) + ".mul");
+
+                if (File.Exists(path))
                 {
-                    UOFileMul fonts = new UOFileMul(UOFileManager.GetUOFilePath("fonts.mul"));
-                    UOFileMul[] uniFonts = new UOFileMul[20];
+                    uniFonts[i] = new UOFileMul(path);
 
-                    for (int i = 0; i < 20; i++)
-                    {
-                        string path = UOFileManager.GetUOFilePath("unifont" + (i == 0 ? "" : i.ToString()) + ".mul");
+                    _unicodeFontAddress[i] = uniFonts[i].StartAddress;
 
-                        if (File.Exists(path))
-                        {
-                            uniFonts[i] = new UOFileMul(path);
-
-                            _unicodeFontAddress[i] = uniFonts[i].StartAddress;
-
-                            _unicodeFontSize[i] = uniFonts[i].Length;
-                        }
-                    }
-
-                    int fontHeaderSize = sizeof(FontHeader);
-                    FontCount = 0;
-
-                    while (fonts.Position < fonts.Length)
-                    {
-                        bool exit = false;
-                        fonts.Skip(1);
-
-                        for (int i = 0; i < 224; i++)
-                        {
-                            FontHeader* fh = (FontHeader*)fonts.PositionAddress;
-
-                            if (fonts.Position + fontHeaderSize >= fonts.Length)
-                            {
-                                continue;
-                            }
-
-                            fonts.Skip(fontHeaderSize);
-                            int bcount = fh->Width * fh->Height * 2;
-
-                            if (fonts.Position + bcount > fonts.Length)
-                            {
-                                exit = true;
-
-                                break;
-                            }
-
-                            fonts.Skip(bcount);
-                        }
-
-                        if (exit)
-                        {
-                            break;
-                        }
-
-                        FontCount++;
-                    }
-
-                    if (FontCount < 1)
-                    {
-                        FontCount = 0;
-
-                        return;
-                    }
-
-                    _fontData = new FontCharacterData[FontCount, 224];
-                    fonts.Seek(0);
-
-                    for (int i = 0; i < FontCount; i++)
-                    {
-                        byte header = fonts.ReadByte();
-
-                        for (int j = 0; j < 224; j++)
-                        {
-                            if (fonts.Position + 3 >= fonts.Length)
-                            {
-                                continue;
-                            }
-
-                            byte w = fonts.ReadByte();
-                            byte h = fonts.ReadByte();
-                            fonts.Skip(1);
-                            _fontData[i, j] = new FontCharacterData(w, h, (ushort*)fonts.PositionAddress);
-                            fonts.Skip(w * h * sizeof(ushort));
-                        }
-                    }
-
-                    if (_unicodeFontAddress[1] == IntPtr.Zero)
-                    {
-                        _unicodeFontAddress[1] = _unicodeFontAddress[0];
-                        _unicodeFontSize[1] = _unicodeFontSize[0];
-                    }
+                    _unicodeFontSize[i] = uniFonts[i].Length;
                 }
-            );
+            }
+
+            int fontHeaderSize = sizeof(FontHeader);
+            FontCount = 0;
+
+            while (fonts.Position < fonts.Length)
+            {
+                bool exit = false;
+                fonts.Skip(1);
+
+                for (int i = 0; i < 224; i++)
+                {
+                    FontHeader* fh = (FontHeader*)fonts.PositionAddress;
+
+                    if (fonts.Position + fontHeaderSize >= fonts.Length)
+                    {
+                        continue;
+                    }
+
+                    fonts.Skip(fontHeaderSize);
+                    int bcount = fh->Width * fh->Height * 2;
+
+                    if (fonts.Position + bcount > fonts.Length)
+                    {
+                        exit = true;
+
+                        break;
+                    }
+
+                    fonts.Skip(bcount);
+                }
+
+                if (exit)
+                {
+                    break;
+                }
+
+                FontCount++;
+            }
+
+            if (FontCount < 1)
+            {
+                FontCount = 0;
+
+                return;
+            }
+
+            _fontData = new FontCharacterData[FontCount, 224];
+            fonts.Seek(0);
+
+            for (int i = 0; i < FontCount; i++)
+            {
+                byte header = fonts.ReadByte();
+
+                for (int j = 0; j < 224; j++)
+                {
+                    if (fonts.Position + 3 >= fonts.Length)
+                    {
+                        continue;
+                    }
+
+                    byte w = fonts.ReadByte();
+                    byte h = fonts.ReadByte();
+                    fonts.Skip(1);
+                    _fontData[i, j] = new FontCharacterData(w, h, (ushort*)fonts.PositionAddress);
+                    fonts.Skip(w * h * sizeof(ushort));
+                }
+            }
+
+            if (_unicodeFontAddress[1] == IntPtr.Zero)
+            {
+                _unicodeFontAddress[1] = _unicodeFontAddress[0];
+                _unicodeFontSize[1] = _unicodeFontSize[0];
+            }
+
         }
 
         public bool UnicodeFontExists(byte font)
@@ -2346,7 +2342,7 @@ namespace ClassicUO.IO.Resources
                 {
                     renderedText.Links.Add(links[i]);
                 }
-                
+
                 renderedText.LinesCount = linesCount;
 
                 fixed (uint* dataPtr = pData)
@@ -2355,7 +2351,7 @@ namespace ClassicUO.IO.Resources
                     (
                         0,
                         null,
-                        (IntPtr) dataPtr,
+                        (IntPtr)dataPtr,
                         width * height * sizeof(uint)
                     );
                 }

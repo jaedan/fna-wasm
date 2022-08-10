@@ -55,71 +55,67 @@ namespace ClassicUO.IO.Resources
 
         public Dictionary<ProfessionInfo, List<ProfessionInfo>> Professions { get; } = new Dictionary<ProfessionInfo, List<ProfessionInfo>>();
 
-        public override Task Load()
+        public override void Load()
         {
-            return Task.Run
-            (
-                () =>
+
+            bool result = false;
+
+            FileInfo file = new FileInfo(UOFileManager.GetUOFilePath("Prof.txt"));
+
+            if (file.Exists)
+            {
+                if (file.Length > 0x100000) //1megabyte limit of string file
                 {
-                    bool result = false;
+                    throw new InternalBufferOverflowException($"{file.FullName} exceeds the maximum 1Megabyte allowed size for a string text file, please, check that the file is correct and not corrupted -> {file.Length} file size");
+                }
 
-                    FileInfo file = new FileInfo(UOFileManager.GetUOFilePath("Prof.txt"));
+                //what if file doesn't exist? we skip section completely...directly into advanced selection
+                TextFileParser read = new TextFileParser(File.ReadAllText(file.FullName), new[] { ' ', '\t', ',' }, new[] { '#', ';' }, new[] { '"', '"' });
 
-                    if (file.Exists)
+                while (!read.IsEOF())
+                {
+                    List<string> strings = read.ReadTokens();
+
+                    if (strings.Count > 0)
                     {
-                        if (file.Length > 0x100000) //1megabyte limit of string file
+                        if (strings[0].ToLower() == "begin")
                         {
-                            throw new InternalBufferOverflowException($"{file.FullName} exceeds the maximum 1Megabyte allowed size for a string text file, please, check that the file is correct and not corrupted -> {file.Length} file size");
-                        }
+                            result = ParseFilePart(read);
 
-                        //what if file doesn't exist? we skip section completely...directly into advanced selection
-                        TextFileParser read = new TextFileParser(File.ReadAllText(file.FullName), new[] { ' ', '\t', ',' }, new[] { '#', ';' }, new[] { '"', '"' });
-
-                        while (!read.IsEOF())
-                        {
-                            List<string> strings = read.ReadTokens();
-
-                            if (strings.Count > 0)
+                            if (!result)
                             {
-                                if (strings[0].ToLower() == "begin")
-                                {
-                                    result = ParseFilePart(read);
-
-                                    if (!result)
-                                    {
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Professions[new ProfessionInfo
-                    {
-                        Name = "Advanced",
-                        Localization = 1061176,
-                        Description = 1061226,
-                        Graphic = 5545,
-                        TopLevel = true,
-                        Type = PROF_TYPE.PROFESSION,
-                        DescriptionIndex = -1,
-                        TrueName = "advanced"
-                    }] = null;
-
-                    foreach (KeyValuePair<ProfessionInfo, List<ProfessionInfo>> kvp in Professions)
-                    {
-                        kvp.Key.Childrens = null;
-
-                        if (kvp.Value != null)
-                        {
-                            foreach (ProfessionInfo info in kvp.Value)
-                            {
-                                info.Childrens = null;
+                                break;
                             }
                         }
                     }
                 }
-            );
+            }
+
+            Professions[new ProfessionInfo
+            {
+                Name = "Advanced",
+                Localization = 1061176,
+                Description = 1061226,
+                Graphic = 5545,
+                TopLevel = true,
+                Type = PROF_TYPE.PROFESSION,
+                DescriptionIndex = -1,
+                TrueName = "advanced"
+            }] = null;
+
+            foreach (KeyValuePair<ProfessionInfo, List<ProfessionInfo>> kvp in Professions)
+            {
+                kvp.Key.Childrens = null;
+
+                if (kvp.Value != null)
+                {
+                    foreach (ProfessionInfo info in kvp.Value)
+                    {
+                        info.Childrens = null;
+                    }
+                }
+            }
+
         }
 
         private int GetKeyCode(string key)
@@ -165,158 +161,158 @@ namespace ClassicUO.IO.Resources
 
                 int code = GetKeyCode(strings[0]);
 
-                switch ((PM_CODE) code)
+                switch ((PM_CODE)code)
                 {
                     case PM_CODE.BEGIN:
                     case PM_CODE.END:
 
-                    {
-                        exit = true;
+                        {
+                            exit = true;
 
-                        break;
-                    }
+                            break;
+                        }
 
                     case PM_CODE.NAME:
 
-                    {
-                        name = strings[1];
+                        {
+                            name = strings[1];
 
-                        break;
-                    }
+                            break;
+                        }
 
                     case PM_CODE.TRUENAME:
 
-                    {
-                        trueName = strings[1];
+                        {
+                            trueName = strings[1];
 
-                        break;
-                    }
+                            break;
+                        }
 
                     case PM_CODE.DESC:
 
-                    {
-                        int.TryParse(strings[1], out descriptionIndex);
+                        {
+                            int.TryParse(strings[1], out descriptionIndex);
 
-                        break;
-                    }
+                            break;
+                        }
 
                     case PM_CODE.TOPLEVEL:
 
-                    {
-                        topLevel = GetKeyCode(strings[1]) == (int) PM_CODE.TRUE;
+                        {
+                            topLevel = GetKeyCode(strings[1]) == (int)PM_CODE.TRUE;
 
-                        break;
-                    }
+                            break;
+                        }
 
                     case PM_CODE.GUMP:
 
-                    {
-                        ushort.TryParse(strings[1], out gump);
+                        {
+                            ushort.TryParse(strings[1], out gump);
 
-                        break;
-                    }
+                            break;
+                        }
 
                     case PM_CODE.TYPE:
 
-                    {
-                        if (GetKeyCode(strings[1]) == (int) PM_CODE.CATEGORY)
                         {
-                            type = PROF_TYPE.CATEGORY;
-                        }
-                        else
-                        {
-                            type = PROF_TYPE.PROFESSION;
-                        }
+                            if (GetKeyCode(strings[1]) == (int)PM_CODE.CATEGORY)
+                            {
+                                type = PROF_TYPE.CATEGORY;
+                            }
+                            else
+                            {
+                                type = PROF_TYPE.PROFESSION;
+                            }
 
-                        break;
-                    }
+                            break;
+                        }
 
                     case PM_CODE.CHILDREN:
 
-                    {
-                        for (int j = 1; j < strings.Count; j++)
                         {
-                            childrens.Add(strings[j]);
-                        }
+                            for (int j = 1; j < strings.Count; j++)
+                            {
+                                childrens.Add(strings[j]);
+                            }
 
-                        break;
-                    }
+                            break;
+                        }
 
                     case PM_CODE.SKILL:
 
-                    {
-                        if (strings.Count > 2)
                         {
-                            int idx = 0;
-
-                            for (int i = 0, len = skillIndex.GetLength(0); i < len; i++)
+                            if (strings.Count > 2)
                             {
-                                if (skillIndex[i, 0] == 0xFF)
-                                {
-                                    idx = i;
+                                int idx = 0;
 
-                                    break;
+                                for (int i = 0, len = skillIndex.GetLength(0); i < len; i++)
+                                {
+                                    if (skillIndex[i, 0] == 0xFF)
+                                    {
+                                        idx = i;
+
+                                        break;
+                                    }
+                                }
+
+                                for (int j = 0; j < SkillsLoader.Instance.SkillsCount; j++)
+                                {
+                                    SkillEntry skill = SkillsLoader.Instance.Skills[j];
+
+                                    if (strings[1] == skill.Name || ((SkillEntry.HardCodedName)skill.Index).ToString().ToLower() == strings[1].ToLower())
+                                    {
+                                        skillIndex[idx, 0] = j;
+                                        int.TryParse(strings[2], out skillIndex[idx, 1]);
+
+                                        break;
+                                    }
                                 }
                             }
 
-                            for (int j = 0; j < SkillsLoader.Instance.SkillsCount; j++)
-                            {
-                                SkillEntry skill = SkillsLoader.Instance.Skills[j];
-
-                                if (strings[1] == skill.Name || ((SkillEntry.HardCodedName) skill.Index).ToString().ToLower() == strings[1].ToLower())
-                                {
-                                    skillIndex[idx, 0] = j;
-                                    int.TryParse(strings[2], out skillIndex[idx, 1]);
-
-                                    break;
-                                }
-                            }
+                            break;
                         }
-
-                        break;
-                    }
 
                     case PM_CODE.STAT:
 
-                    {
-                        if (strings.Count > 2)
                         {
-                            code = GetKeyCode(strings[1]);
-                            int.TryParse(strings[2], out int val);
+                            if (strings.Count > 2)
+                            {
+                                code = GetKeyCode(strings[1]);
+                                int.TryParse(strings[2], out int val);
 
-                            if ((PM_CODE) code == PM_CODE.STR)
-                            {
-                                stats[0] = val;
+                                if ((PM_CODE)code == PM_CODE.STR)
+                                {
+                                    stats[0] = val;
+                                }
+                                else if ((PM_CODE)code == PM_CODE.INT)
+                                {
+                                    stats[1] = val;
+                                }
+                                else if ((PM_CODE)code == PM_CODE.DEX)
+                                {
+                                    stats[2] = val;
+                                }
                             }
-                            else if ((PM_CODE) code == PM_CODE.INT)
-                            {
-                                stats[1] = val;
-                            }
-                            else if ((PM_CODE) code == PM_CODE.DEX)
-                            {
-                                stats[2] = val;
-                            }
+
+                            break;
                         }
-
-                        break;
-                    }
 
                     case PM_CODE.NAME_CLILOC_ID:
 
-                    {
-                        int.TryParse(strings[1], out nameClilocID);
-                        name = ClilocLoader.Instance.GetString(nameClilocID, true, name);
+                        {
+                            int.TryParse(strings[1], out nameClilocID);
+                            name = ClilocLoader.Instance.GetString(nameClilocID, true, name);
 
-                        break;
-                    }
+                            break;
+                        }
 
                     case PM_CODE.DESCRIPTION_CLILOC_ID:
 
-                    {
-                        int.TryParse(strings[1], out descriptionClilocID);
+                        {
+                            int.TryParse(strings[1], out descriptionClilocID);
 
-                        break;
-                    }
+                            break;
+                        }
                 }
             }
 

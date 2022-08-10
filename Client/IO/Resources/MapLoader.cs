@@ -128,127 +128,122 @@ namespace ClassicUO.IO.Resources
             _staDifl = new UOFileMul[Constants.MAPS_COUNT];
         }
 
-        public override unsafe Task Load()
+        public override unsafe void Load()
         {
-            return Task.Run
-            (
-                () =>
+
+            bool foundOneMap = false;
+
+            if (!string.IsNullOrEmpty(Settings.GlobalSettings.MapsLayouts))
+            {
+                string[] values = Settings.GlobalSettings.MapsLayouts.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+                Constants.MAPS_COUNT = values.Length;
+                MapsDefaultSize = new int[values.Length, 2];
+
+                Log.Trace($"default maps size overraided. [count: {Constants.MAPS_COUNT}]");
+
+
+                int index = 0;
+
+                char[] splitchar = new char[1] { ',' };
+
+                foreach (string s in values)
                 {
-                    bool foundOneMap = false;
+                    string[] v = s.Split(splitchar, StringSplitOptions.RemoveEmptyEntries);
 
-                    if (!string.IsNullOrEmpty(Settings.GlobalSettings.MapsLayouts))
+                    if (v.Length >= 2 && int.TryParse(v[0], out int width) && int.TryParse(v[1], out int height))
                     {
-                        string[] values = Settings.GlobalSettings.MapsLayouts.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                        MapsDefaultSize[index, 0] = width;
+                        MapsDefaultSize[index, 1] = height;
 
-                        Constants.MAPS_COUNT = values.Length;
-                        MapsDefaultSize = new int[values.Length, 2];
-
-                        Log.Trace($"default maps size overraided. [count: {Constants.MAPS_COUNT}]");
-
-
-                        int index = 0;
-
-                        char[] splitchar = new char[1] { ',' };
-
-                        foreach (string s in values)
-                        {
-                            string[] v = s.Split(splitchar, StringSplitOptions.RemoveEmptyEntries);
-
-                            if (v.Length >= 2 && int.TryParse(v[0], out int width) && int.TryParse(v[1], out int height))
-                            {
-                                MapsDefaultSize[index, 0] = width;
-                                MapsDefaultSize[index, 1] = height;
-
-                                Log.Trace($"overraided map size: {width},{height}  [index: {index}]");
-                            }
-                            else
-                            {
-                                Log.Error($"Error parsing 'width,height' values: '{s}'");
-                            }
-
-                            ++index;
-                        }
+                        Log.Trace($"overraided map size: {width},{height}  [index: {index}]");
+                    }
+                    else
+                    {
+                        Log.Error($"Error parsing 'width,height' values: '{s}'");
                     }
 
-
-                    Initialize();
-
-                    for (var i = 0; i < Constants.MAPS_COUNT; ++i)
-                    {
-                        string path = UOFileManager.GetUOFilePath($"map{i}LegacyMUL.uop");
-
-                        if (Client.IsUOPInstallation && File.Exists(path))
-                        {
-                            _filesMap[i] = new UOFileUop(path, $"build/map{i}legacymul/{{0:D8}}.dat");
-                            foundOneMap = true;
-                        }
-                        else
-                        {
-                            path = UOFileManager.GetUOFilePath($"map{i}.mul");
-
-                            if (File.Exists(path))
-                            {
-                                _filesMap[i] = new UOFileMul(path);
-
-                                foundOneMap = true;
-                            }
-
-                            path = UOFileManager.GetUOFilePath($"mapdifl{i}.mul");
-
-                            if (File.Exists(path))
-                            {
-                                _mapDifl[i] = new UOFileMul(path);
-                                _mapDif[i] = new UOFileMul(UOFileManager.GetUOFilePath($"mapdif{i}.mul"));
-                                _staDifl[i] = new UOFileMul(UOFileManager.GetUOFilePath($"stadifl{i}.mul"));
-                                _staDifi[i] = new UOFileMul(UOFileManager.GetUOFilePath($"stadifi{i}.mul"));
-                                _staDif[i] = new UOFileMul(UOFileManager.GetUOFilePath($"stadif{i}.mul"));
-                            }
-                        }
-
-                        path = UOFileManager.GetUOFilePath($"statics{i}.mul");
-
-                        if (File.Exists(path))
-                        {
-                            _filesStatics[i] = new UOFileMul(path);
-                        }
-
-                        path = UOFileManager.GetUOFilePath($"staidx{i}.mul");
-
-                        if (File.Exists(path))
-                        {
-                            _filesIdxStatics[i] = new UOFileMul(path);
-                        }
-                    }
-
-                    if (!foundOneMap)
-                    {
-                        throw new FileNotFoundException("No maps found.");
-                    }
-
-
-                    int mapblocksize = sizeof(MapBlock);
-
-                    if (_filesMap[0].Length / mapblocksize == 393216 || Client.Version < ClientVersion.CV_4011D)
-                    {
-                        MapsDefaultSize[0, 0] = MapsDefaultSize[1, 0] = 6144;
-                    }
-
-                    // This is an hack to patch correctly all maps when you have to fake map1
-                    if (_filesMap[1] == null || _filesMap[1].StartAddress == IntPtr.Zero)
-                    {
-                        _filesMap[1] = _filesMap[0];
-                        _filesStatics[1] = _filesStatics[0];
-                        _filesIdxStatics[1] = _filesIdxStatics[0];
-                    }
-
-                    var res = Parallel.For(0, Constants.MAPS_COUNT, i =>
-                    {
-                        MapBlocksSize[i, 0] = MapsDefaultSize[i, 0] >> 3;
-                        MapBlocksSize[i, 1] = MapsDefaultSize[i, 1] >> 3;
-                        LoadMap(i);
-                    });          
+                    ++index;
                 }
-            );
+            }
+
+
+            Initialize();
+
+            for (var i = 0; i < Constants.MAPS_COUNT; ++i)
+            {
+                string path = UOFileManager.GetUOFilePath($"map{i}LegacyMUL.uop");
+
+                if (Client.IsUOPInstallation && File.Exists(path))
+                {
+                    _filesMap[i] = new UOFileUop(path, $"build/map{i}legacymul/{{0:D8}}.dat");
+                    foundOneMap = true;
+                }
+                else
+                {
+                    path = UOFileManager.GetUOFilePath($"map{i}.mul");
+
+                    if (File.Exists(path))
+                    {
+                        _filesMap[i] = new UOFileMul(path);
+
+                        foundOneMap = true;
+                    }
+
+                    path = UOFileManager.GetUOFilePath($"mapdifl{i}.mul");
+
+                    if (File.Exists(path))
+                    {
+                        _mapDifl[i] = new UOFileMul(path);
+                        _mapDif[i] = new UOFileMul(UOFileManager.GetUOFilePath($"mapdif{i}.mul"));
+                        _staDifl[i] = new UOFileMul(UOFileManager.GetUOFilePath($"stadifl{i}.mul"));
+                        _staDifi[i] = new UOFileMul(UOFileManager.GetUOFilePath($"stadifi{i}.mul"));
+                        _staDif[i] = new UOFileMul(UOFileManager.GetUOFilePath($"stadif{i}.mul"));
+                    }
+                }
+
+                path = UOFileManager.GetUOFilePath($"statics{i}.mul");
+
+                if (File.Exists(path))
+                {
+                    _filesStatics[i] = new UOFileMul(path);
+                }
+
+                path = UOFileManager.GetUOFilePath($"staidx{i}.mul");
+
+                if (File.Exists(path))
+                {
+                    _filesIdxStatics[i] = new UOFileMul(path);
+                }
+            }
+
+            if (!foundOneMap)
+            {
+                throw new FileNotFoundException("No maps found.");
+            }
+
+
+            int mapblocksize = sizeof(MapBlock);
+
+            if (_filesMap[0].Length / mapblocksize == 393216 || Client.Version < ClientVersion.CV_4011D)
+            {
+                MapsDefaultSize[0, 0] = MapsDefaultSize[1, 0] = 6144;
+            }
+
+            // This is an hack to patch correctly all maps when you have to fake map1
+            if (_filesMap[1] == null || _filesMap[1].StartAddress == IntPtr.Zero)
+            {
+                _filesMap[1] = _filesMap[0];
+                _filesStatics[1] = _filesStatics[0];
+                _filesIdxStatics[1] = _filesIdxStatics[0];
+            }
+
+            var res = Parallel.For(0, Constants.MAPS_COUNT, i =>
+            {
+                MapBlocksSize[i, 0] = MapsDefaultSize[i, 0] >> 3;
+                MapBlocksSize[i, 1] = MapsDefaultSize[i, 1] >> 3;
+                LoadMap(i);
+            });
         }
 
         internal unsafe void LoadMap(int i)
@@ -284,12 +279,12 @@ namespace ClassicUO.IO.Resources
                 staticfile = _filesStatics[0];
             }
 
-            ulong staticidxaddress = (ulong) fileidx.StartAddress;
-            ulong endstaticidxaddress = staticidxaddress + (ulong) fileidx.Length;
-            ulong staticaddress = (ulong) staticfile.StartAddress;
-            ulong endstaticaddress = staticaddress + (ulong) staticfile.Length;
-            ulong mapddress = (ulong) file.StartAddress;
-            ulong endmapaddress = mapddress + (ulong) file.Length;
+            ulong staticidxaddress = (ulong)fileidx.StartAddress;
+            ulong endstaticidxaddress = staticidxaddress + (ulong)fileidx.Length;
+            ulong staticaddress = (ulong)staticfile.StartAddress;
+            ulong endstaticaddress = staticaddress + (ulong)staticfile.Length;
+            ulong mapddress = (ulong)file.StartAddress;
+            ulong endmapaddress = mapddress + (ulong)file.Length;
             ulong uopoffset = 0;
             int fileNumber = -1;
             bool isuop = file is UOFileUop;
@@ -322,15 +317,15 @@ namespace ClassicUO.IO.Resources
                     }
                 }
 
-                ulong address = mapddress + uopoffset + (ulong) (blocknum * mapblocksize);
+                ulong address = mapddress + uopoffset + (ulong)(blocknum * mapblocksize);
 
                 if (address < endmapaddress)
                 {
                     realmapaddress = address;
                 }
 
-                ulong stidxaddress = staticidxaddress + (ulong) (block * staticidxblocksize);
-                StaidxBlock* bb = (StaidxBlock*) stidxaddress;
+                ulong stidxaddress = staticidxaddress + (ulong)(block * staticidxblocksize);
+                StaidxBlock* bb = (StaidxBlock*)stidxaddress;
 
                 if (stidxaddress < endstaticidxaddress && bb->Size > 0 && bb->Position != 0xFFFFFFFF)
                 {
@@ -339,7 +334,7 @@ namespace ClassicUO.IO.Resources
                     if (address1 < endstaticaddress)
                     {
                         realstaticaddress = address1;
-                        realstaticcount = (uint) (bb->Size / staticblocksize);
+                        realstaticcount = (uint)(bb->Size / staticblocksize);
 
                         if (realstaticcount > 1024)
                         {
@@ -395,7 +390,7 @@ namespace ClassicUO.IO.Resources
 
             BlockData[0][block].StaticAddress = BlockData[0][block].OriginalStaticAddress = address;
 
-            count = (uint) (count / (sizeof(StaidxBlockVerdata)));
+            count = (uint)(count / (sizeof(StaidxBlockVerdata)));
 
             if (count > 1024)
             {
@@ -409,7 +404,7 @@ namespace ClassicUO.IO.Resources
         {
             ResetPatchesInBlockTable();
 
-            PatchesCount = (int) reader.ReadUInt32BE();
+            PatchesCount = (int)reader.ReadUInt32BE();
 
             if (PatchesCount < 0)
             {
@@ -439,9 +434,9 @@ namespace ClassicUO.IO.Resources
                     continue;
                 }
 
-                int mapPatchesCount = (int) reader.ReadUInt32BE();
+                int mapPatchesCount = (int)reader.ReadUInt32BE();
                 MapPatchCount[i] = mapPatchesCount;
-                int staticPatchesCount = (int) reader.ReadUInt32BE();
+                int staticPatchesCount = (int)reader.ReadUInt32BE();
                 StaticPatchCount[i] = staticPatchesCount;
 
                 int w = MapBlocksSize[i, 0];
@@ -459,7 +454,7 @@ namespace ClassicUO.IO.Resources
                         continue;
                     }
 
-                    mapPatchesCount = Math.Min(mapPatchesCount, (int) difl.Length >> 2);
+                    mapPatchesCount = Math.Min(mapPatchesCount, (int)difl.Length >> 2);
 
                     difl.Seek(0);
                     dif.Seek(0);
@@ -470,7 +465,7 @@ namespace ClassicUO.IO.Resources
 
                         if (blockIndex < maxBlockCount)
                         {
-                            BlockData[idx][blockIndex].MapAddress = (ulong) dif.PositionAddress;
+                            BlockData[idx][blockIndex].MapAddress = (ulong)dif.PositionAddress;
 
                             result = true;
                         }
@@ -489,9 +484,9 @@ namespace ClassicUO.IO.Resources
                         continue;
                     }
 
-                    ulong startAddress = (ulong) _staDif[i].StartAddress;
+                    ulong startAddress = (ulong)_staDif[i].StartAddress;
 
-                    staticPatchesCount = Math.Min(staticPatchesCount, (int) difl.Length >> 2);
+                    staticPatchesCount = Math.Min(staticPatchesCount, (int)difl.Length >> 2);
 
                     difl.Seek(0);
                     difi.Seek(0);
@@ -508,7 +503,7 @@ namespace ClassicUO.IO.Resources
 
                         uint blockIndex = difl.ReadUInt();
 
-                        StaidxBlock* sidx = (StaidxBlock*) difi.PositionAddress;
+                        StaidxBlock* sidx = (StaidxBlock*)difi.PositionAddress;
 
                         difi.Skip(sizeOfStaidxBlock);
 
@@ -520,7 +515,7 @@ namespace ClassicUO.IO.Resources
                             if (sidx->Size > 0 && sidx->Position != 0xFFFF_FFFF)
                             {
                                 realStaticAddress = startAddress + sidx->Position;
-                                realStaticCount = (int) (sidx->Size / sizeOfStaicsBlock);
+                                realStaticCount = (int)(sidx->Size / sizeOfStaicsBlock);
 
                                 if (realStaticCount > 0)
                                 {
@@ -533,7 +528,7 @@ namespace ClassicUO.IO.Resources
 
                             BlockData[idx][blockIndex].StaticAddress = realStaticAddress;
 
-                            BlockData[idx][blockIndex].StaticCount = (uint) realStaticCount;
+                            BlockData[idx][blockIndex].StaticCount = (uint)realStaticCount;
 
                             result = true;
                         }

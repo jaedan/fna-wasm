@@ -59,30 +59,26 @@ namespace ClassicUO.IO.Resources
             return map >= 0 && map < _facets.Length && _facets[map] != null;
         }
 
-        public override Task Load()
+        public override void Load()
         {
-            return Task.Run
-            (
-                () =>
+
+            string path = UOFileManager.GetUOFilePath("Multimap.rle");
+
+            if (File.Exists(path))
+            {
+                _file = new UOFile(path, true);
+            }
+
+            for (int i = 0; i < _facets.Length; i++)
+            {
+                path = UOFileManager.GetUOFilePath($"facet0{i}.mul");
+
+                if (File.Exists(path))
                 {
-                    string path = UOFileManager.GetUOFilePath("Multimap.rle");
-
-                    if (File.Exists(path))
-                    {
-                        _file = new UOFile(path, true);
-                    }
-
-                    for (int i = 0; i < _facets.Length; i++)
-                    {
-                        path = UOFileManager.GetUOFilePath($"facet0{i}.mul");
-
-                        if (File.Exists(path))
-                        {
-                            _facets[i] = new UOFileMul(path);
-                        }
-                    }
+                    _facets[i] = new UOFileMul(path);
                 }
-            );
+            }
+
         }
 
         public unsafe Texture2D LoadMap
@@ -149,7 +145,7 @@ namespace ClassicUO.IO.Resources
             while (_file.Position < _file.Length)
             {
                 byte pic = _file.ReadByte();
-                byte size = (byte) (pic & 0x7F);
+                byte size = (byte)(pic & 0x7F);
                 bool colored = (pic & 0x80) != 0;
 
                 int currentHeight = y * pheight;
@@ -196,7 +192,7 @@ namespace ClassicUO.IO.Resources
                     Marshal.StructureToPtr(HuesLoader.Instance.HuesRange[i], ptr + i * s, false);
                 }
 
-                ushort* huesData = (ushort*) (byte*) (ptr + 30800);
+                ushort* huesData = (ushort*)(byte*)(ptr + 30800);
 
                 uint[] colorTable = System.Buffers.ArrayPool<uint>.Shared.Rent(maxPixelValue);
                 Texture2D texture = new Texture2D(Client.Game.GraphicsDevice, width, height, false, SurfaceFormat.Color);

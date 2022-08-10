@@ -50,41 +50,37 @@ namespace ClassicUO.IO.Resources
 
         public static SpeechesLoader Instance => _instance ?? (_instance = new SpeechesLoader());
 
-        public override unsafe Task Load()
+        public override unsafe void Load()
         {
-            return Task.Run
-            (
-                () =>
+
+            string path = UOFileManager.GetUOFilePath("speech.mul");
+
+            if (!File.Exists(path))
+            {
+                _speech = Array.Empty<SpeechEntry>();
+
+                return;
+            }
+
+            UOFileMul file = new UOFileMul(path);
+            List<SpeechEntry> entries = new List<SpeechEntry>();
+
+            while (file.Position < file.Length)
+            {
+                int id = file.ReadUShortReversed();
+                int length = file.ReadUShortReversed();
+
+                if (length > 0)
                 {
-                    string path = UOFileManager.GetUOFilePath("speech.mul");
+                    entries.Add(new SpeechEntry(id, string.Intern(Encoding.UTF8.GetString((byte*)file.PositionAddress, length))));
 
-                    if (!File.Exists(path))
-                    {
-                        _speech = Array.Empty<SpeechEntry>();
-
-                        return;
-                    }
-
-                    UOFileMul file = new UOFileMul(path);
-                    List<SpeechEntry> entries = new List<SpeechEntry>();
-
-                    while (file.Position < file.Length)
-                    {
-                        int id = file.ReadUShortReversed();
-                        int length = file.ReadUShortReversed();
-
-                        if (length > 0)
-                        {
-                            entries.Add(new SpeechEntry(id, string.Intern(Encoding.UTF8.GetString((byte*) file.PositionAddress, length))));
-
-                            file.Skip(length);
-                        }
-                    }
-
-                    _speech = entries.ToArray();
-                    file.Dispose();
+                    file.Skip(length);
                 }
-            );
+            }
+
+            _speech = entries.ToArray();
+            file.Dispose();
+
         }
 
         public bool IsMatch(string input, in SpeechEntry entry)
@@ -119,13 +115,13 @@ namespace ClassicUO.IO.Resources
                 while (idx >= 0)
                 {
                     // "bank" or " bank" or "bank " or " bank " or "!bank" or "bank!"
-                    if ((idx - 1 < 0 || char.IsWhiteSpace(input[idx - 1]) || !char.IsLetter(input[idx - 1])) && 
-                        (idx + split[i].Length >= input.Length || char.IsWhiteSpace(input[idx + split[i].Length]) || !char.IsLetter(input[idx + split[i].Length]) ))
+                    if ((idx - 1 < 0 || char.IsWhiteSpace(input[idx - 1]) || !char.IsLetter(input[idx - 1])) &&
+                        (idx + split[i].Length >= input.Length || char.IsWhiteSpace(input[idx + split[i].Length]) || !char.IsLetter(input[idx + split[i].Length])))
                     {
                         return true;
                     }
 
-                    
+
 
                     idx = input.IndexOf(split[i], idx + 1, StringComparison.InvariantCultureIgnoreCase);
                 }
@@ -165,7 +161,7 @@ namespace ClassicUO.IO.Resources
     {
         public SpeechEntry(int id, string keyword)
         {
-            KeywordID = (short) id;
+            KeywordID = (short)id;
 
             Keywords = keyword.Split
             (

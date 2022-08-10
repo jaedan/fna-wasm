@@ -53,64 +53,60 @@ namespace ClassicUO.IO.Resources
         public static TexmapsLoader Instance =>
             _instance ?? (_instance = new TexmapsLoader(Constants.MAX_LAND_TEXTURES_DATA_INDEX_COUNT));
 
-        public override Task Load()
+        public override void Load()
         {
-            return Task.Run
-            (
-                () =>
+
+            string path = UOFileManager.GetUOFilePath("texmaps.mul");
+            string pathidx = UOFileManager.GetUOFilePath("texidx.mul");
+
+            FileSystemHelper.EnsureFileExists(path);
+            FileSystemHelper.EnsureFileExists(pathidx);
+
+            _file = new UOFileMul(path, pathidx, Constants.MAX_LAND_TEXTURES_DATA_INDEX_COUNT, 10);
+            _file.FillEntries(ref Entries);
+            string pathdef = UOFileManager.GetUOFilePath("TexTerr.def");
+
+            if (!File.Exists(pathdef))
+            {
+                return;
+            }
+
+            using (DefReader defReader = new DefReader(pathdef))
+            {
+                while (defReader.Next())
                 {
-                    string path = UOFileManager.GetUOFilePath("texmaps.mul");
-                    string pathidx = UOFileManager.GetUOFilePath("texidx.mul");
+                    int index = defReader.ReadInt();
 
-                    FileSystemHelper.EnsureFileExists(path);
-                    FileSystemHelper.EnsureFileExists(pathidx);
-
-                    _file = new UOFileMul(path, pathidx, Constants.MAX_LAND_TEXTURES_DATA_INDEX_COUNT, 10);
-                    _file.FillEntries(ref Entries);
-                    string pathdef = UOFileManager.GetUOFilePath("TexTerr.def");
-
-                    if (!File.Exists(pathdef))
+                    if (index < 0 || index >= Entries.Length)
                     {
-                        return;
+                        continue;
                     }
 
-                    using (DefReader defReader = new DefReader(pathdef))
+                    int[] group = defReader.ReadGroup();
+
+                    if (group == null)
                     {
-                        while (defReader.Next())
+                        continue;
+                    }
+
+                    for (int i = 0; i < group.Length; i++)
+                    {
+                        int checkindex = group[i];
+
+                        if (checkindex < 0 || checkindex >= Entries.Length)
                         {
-                            int index = defReader.ReadInt();
-
-                            if (index < 0 || index >= Entries.Length)
-                            {
-                                continue;
-                            }
-
-                            int[] group = defReader.ReadGroup();
-
-                            if (group == null)
-                            {
-                                continue;
-                            }
-
-                            for (int i = 0; i < group.Length; i++)
-                            {
-                                int checkindex = group[i];
-
-                                if (checkindex < 0 || checkindex >= Entries.Length)
-                                {
-                                    continue;
-                                }
-
-                                Entries[index] = Entries[checkindex];
-                            }
+                            continue;
                         }
-                    }
 
-                    _spriteInfos = new SpriteInfo[Entries.Length];
+                        Entries[index] = Entries[checkindex];
+                    }
                 }
-            );
+            }
+
+            _spriteInfos = new SpriteInfo[Entries.Length];
+
         }
-      
+
 
         struct SpriteInfo
         {
@@ -141,7 +137,7 @@ namespace ClassicUO.IO.Resources
 
         private unsafe void AddSpriteToAtlas(TextureAtlas atlas, uint index)
         {
-            ref UOFileIndex entry = ref GetValidRefEntry((int) (index));
+            ref UOFileIndex entry = ref GetValidRefEntry((int)(index));
 
             if (entry.Length <= 0)
             {

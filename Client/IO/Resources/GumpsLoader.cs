@@ -55,87 +55,83 @@ namespace ClassicUO.IO.Resources
         public static GumpsLoader Instance =>
             _instance ?? (_instance = new GumpsLoader(Constants.MAX_GUMP_DATA_INDEX_COUNT));
 
-        public override Task Load()
+        public override void Load()
         {
-            return Task.Run
-            (
-                () =>
+
+            string path = UOFileManager.GetUOFilePath("gumpartLegacyMUL.uop");
+
+            if (Client.IsUOPInstallation && File.Exists(path))
+            {
+                _file = new UOFileUop(path, "build/gumpartlegacymul/{0:D8}.tga", true);
+                Entries = new UOFileIndex[Math.Max(((UOFileUop)_file).TotalEntriesCount, Constants.MAX_GUMP_DATA_INDEX_COUNT)];
+                Client.UseUOPGumps = true;
+            }
+            else
+            {
+                path = UOFileManager.GetUOFilePath("gumpart.mul");
+                string pathidx = UOFileManager.GetUOFilePath("gumpidx.mul");
+
+                if (!File.Exists(path))
                 {
-                    string path = UOFileManager.GetUOFilePath("gumpartLegacyMUL.uop");
+                    path = UOFileManager.GetUOFilePath("Gumpart.mul");
+                }
 
-                    if (Client.IsUOPInstallation && File.Exists(path))
+                if (!File.Exists(pathidx))
+                {
+                    pathidx = UOFileManager.GetUOFilePath("Gumpidx.mul");
+                }
+
+                _file = new UOFileMul(path, pathidx, Constants.MAX_GUMP_DATA_INDEX_COUNT, 12);
+
+                Client.UseUOPGumps = false;
+            }
+
+            _file.FillEntries(ref Entries);
+            _spriteInfos = new SpriteInfo[Entries.Length];
+
+            string pathdef = UOFileManager.GetUOFilePath("gump.def");
+
+            if (!File.Exists(pathdef))
+            {
+                return;
+            }
+
+            using (DefReader defReader = new DefReader(pathdef, 3))
+            {
+                while (defReader.Next())
+                {
+                    int ingump = defReader.ReadInt();
+
+                    if (ingump < 0 || ingump >= Constants.MAX_GUMP_DATA_INDEX_COUNT || ingump >= Entries.Length || Entries[ingump].Length > 0)
                     {
-                        _file = new UOFileUop(path, "build/gumpartlegacymul/{0:D8}.tga", true);
-                        Entries = new UOFileIndex[Math.Max(((UOFileUop) _file).TotalEntriesCount, Constants.MAX_GUMP_DATA_INDEX_COUNT)];
-                        Client.UseUOPGumps = true;
-                    }
-                    else
-                    {
-                        path = UOFileManager.GetUOFilePath("gumpart.mul");
-                        string pathidx = UOFileManager.GetUOFilePath("gumpidx.mul");
-
-                        if (!File.Exists(path))
-                        {
-                            path = UOFileManager.GetUOFilePath("Gumpart.mul");
-                        }
-
-                        if (!File.Exists(pathidx))
-                        {
-                            pathidx = UOFileManager.GetUOFilePath("Gumpidx.mul");
-                        }
-
-                        _file = new UOFileMul(path, pathidx, Constants.MAX_GUMP_DATA_INDEX_COUNT, 12);
-
-                        Client.UseUOPGumps = false;
-                    }
-
-                    _file.FillEntries(ref Entries);
-                    _spriteInfos = new SpriteInfo[Entries.Length];
-
-                    string pathdef = UOFileManager.GetUOFilePath("gump.def");
-
-                    if (!File.Exists(pathdef))
-                    {
-                        return;
+                        continue;
                     }
 
-                    using (DefReader defReader = new DefReader(pathdef, 3))
+                    int[] group = defReader.ReadGroup();
+
+                    if (group == null)
                     {
-                        while (defReader.Next())
+                        continue;
+                    }
+
+                    for (int i = 0; i < group.Length; i++)
+                    {
+                        int checkIndex = group[i];
+
+                        if (checkIndex < 0 || checkIndex >= Constants.MAX_GUMP_DATA_INDEX_COUNT || checkIndex >= Entries.Length || Entries[checkIndex].Length <= 0)
                         {
-                            int ingump = defReader.ReadInt();
-
-                            if (ingump < 0 || ingump >= Constants.MAX_GUMP_DATA_INDEX_COUNT || ingump >= Entries.Length || Entries[ingump].Length > 0)
-                            {
-                                continue;
-                            }
-
-                            int[] group = defReader.ReadGroup();
-
-                            if (group == null)
-                            {
-                                continue;
-                            }
-
-                            for (int i = 0; i < group.Length; i++)
-                            {
-                                int checkIndex = group[i];
-
-                                if (checkIndex < 0 || checkIndex >= Constants.MAX_GUMP_DATA_INDEX_COUNT || checkIndex >= Entries.Length || Entries[checkIndex].Length <= 0)
-                                {
-                                    continue;
-                                }
-
-                                Entries[ingump] = Entries[checkIndex];
-
-                                Entries[ingump].Hue = (ushort) defReader.ReadInt();
-
-                                break;
-                            }
+                            continue;
                         }
+
+                        Entries[ingump] = Entries[checkIndex];
+
+                        Entries[ingump].Hue = (ushort)defReader.ReadInt();
+
+                        break;
                     }
                 }
-            );
+            }
+
         }
 
 
@@ -244,15 +240,15 @@ namespace ClassicUO.IO.Resources
                 if (buffer != null)
                 {
                     System.Buffers.ArrayPool<uint>.Shared.Return(buffer);
-                }             
+                }
             }
         }
 
 
-       
+
         public bool PixelCheck(int index, int x, int y)
         {
-            return _picker.Get((ulong) index, x, y);
+            return _picker.Get((ulong)index, x, y);
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]

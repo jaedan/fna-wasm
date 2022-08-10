@@ -51,20 +51,16 @@ namespace ClassicUO.IO.Resources
 
         public UOFile AnimDataFile => _file;
 
-        public override Task Load()
+        public override void Load()
         {
-            return Task.Run
-            (
-                () =>
-                {
-                    string path = UOFileManager.GetUOFilePath("animdata.mul");
 
-                    if (File.Exists(path))
-                    {
-                        _file = new UOFileMul(path);
-                    }
-                }
-            );
+            string path = UOFileManager.GetUOFilePath("animdata.mul");
+
+            if (File.Exists(path))
+            {
+                _file = new UOFileMul(path);
+            }
+
         }
 
         public unsafe AnimDataFrame CalculateCurrentGraphic(ushort graphic)

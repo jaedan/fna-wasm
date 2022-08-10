@@ -63,180 +63,176 @@ namespace ClassicUO.IO.Resources
 
         public static SoundsLoader Instance => _instance ?? (_instance = new SoundsLoader());
 
-        public override Task Load()
+        public override void Load()
         {
-            return Task.Run
-            (
-                () =>
+
+            string path = UOFileManager.GetUOFilePath("soundLegacyMUL.uop");
+
+            if (Client.IsUOPInstallation && File.Exists(path))
+            {
+                _file = new UOFileUop(path, "build/soundlegacymul/{0:D8}.dat");
+                Entries = new UOFileIndex[Math.Max(((UOFileUop)_file).TotalEntriesCount, Constants.MAX_SOUND_DATA_INDEX_COUNT)];
+            }
+            else
+            {
+                path = UOFileManager.GetUOFilePath("sound.mul");
+                string idxpath = UOFileManager.GetUOFilePath("soundidx.mul");
+
+                if (File.Exists(path) && File.Exists(idxpath))
                 {
-                    string path = UOFileManager.GetUOFilePath("soundLegacyMUL.uop");
-
-                    if (Client.IsUOPInstallation && File.Exists(path))
-                    {
-                        _file = new UOFileUop(path, "build/soundlegacymul/{0:D8}.dat");
-                        Entries = new UOFileIndex[Math.Max(((UOFileUop) _file).TotalEntriesCount, Constants.MAX_SOUND_DATA_INDEX_COUNT)];
-                    }
-                    else
-                    {
-                        path = UOFileManager.GetUOFilePath("sound.mul");
-                        string idxpath = UOFileManager.GetUOFilePath("soundidx.mul");
-
-                        if (File.Exists(path) && File.Exists(idxpath))
-                        {
-                            _file = new UOFileMul(path, idxpath, Constants.MAX_SOUND_DATA_INDEX_COUNT);
-                        }
-                        else
-                        {
-                            throw new FileNotFoundException("no sounds found");
-                        }
-                    }
-
-                    _file.FillEntries(ref Entries);
-
-                    string def = UOFileManager.GetUOFilePath("Sound.def");
-
-                    if (File.Exists(def))
-                    {
-                        using (DefReader reader = new DefReader(def))
-                        {
-                            while (reader.Next())
-                            {
-                                int index = reader.ReadInt();
-
-                                if (index < 0 || index >= Constants.MAX_SOUND_DATA_INDEX_COUNT || index >= _file.Length || Entries[index].Length != 0)
-                                {
-                                    continue;
-                                }
-
-                                int[] group = reader.ReadGroup();
-
-                                if (group == null)
-                                {
-                                    continue;
-                                }
-
-                                for (int i = 0; i < group.Length; i++)
-                                {
-                                    int checkIndex = group[i];
-
-                                    if (checkIndex < -1 || checkIndex >= Constants.MAX_SOUND_DATA_INDEX_COUNT)
-                                    {
-                                        continue;
-                                    }
-
-                                    ref UOFileIndex ind = ref Entries[index];
-
-                                    if (checkIndex == -1)
-                                    {
-                                        ind = default;
-                                    }
-                                    else
-                                    {
-                                        ref readonly UOFileIndex outInd = ref Entries[checkIndex];
-
-                                        if (outInd.Length == 0)
-                                        {
-                                            continue;
-                                        }
-
-                                        Entries[index] = Entries[checkIndex];
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    path = UOFileManager.GetUOFilePath(Client.Version >= ClientVersion.CV_4011C ?  @"Music/Digital/Config.txt" : @"Music/Config.txt");
-
-                    if (File.Exists(path))
-                    {
-                        using (StreamReader reader = new StreamReader(path))
-                        {
-                            string line;
-
-                            while ((line = reader.ReadLine()) != null)
-                            {
-                                if (TryParseConfigLine(line, out Tuple<int, string, bool> songData))
-                                {
-                                    _musicData[songData.Item1] = new Tuple<string, bool>(songData.Item2, songData.Item3);
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        _musicData.Add(0, new Tuple<string, bool>("oldult01", true));
-                        _musicData.Add(1, new Tuple<string, bool>("create1", false));
-                        _musicData.Add(2, new Tuple<string, bool>("dragflit", false));
-                        _musicData.Add(3, new Tuple<string, bool>("oldult02", true));
-                        _musicData.Add(4, new Tuple<string, bool>("oldult03", true));
-                        _musicData.Add(5, new Tuple<string, bool>("oldult04", true));
-                        _musicData.Add(6, new Tuple<string, bool>("oldult05", true));
-                        _musicData.Add(7, new Tuple<string, bool>("oldult06", true));
-                        _musicData.Add(8, new Tuple<string, bool>("stones2", true));
-                        _musicData.Add(9, new Tuple<string, bool>("britain1", true));
-                        _musicData.Add(10, new Tuple<string, bool>("britain2", true));
-                        _musicData.Add(11, new Tuple<string, bool>("bucsden", true));
-                        _musicData.Add(12, new Tuple<string, bool>("jhelom", false));
-                        _musicData.Add(13, new Tuple<string, bool>("lbcastle", false));
-                        _musicData.Add(14, new Tuple<string, bool>("linelle", false));
-                        _musicData.Add(15, new Tuple<string, bool>("magincia", true));
-                        _musicData.Add(16, new Tuple<string, bool>("minoc", true));
-                        _musicData.Add(17, new Tuple<string, bool>("ocllo", true));
-                        _musicData.Add(18, new Tuple<string, bool>("samlethe", false));
-                        _musicData.Add(19, new Tuple<string, bool>("serpents", true));
-                        _musicData.Add(20, new Tuple<string, bool>("skarabra", true));
-                        _musicData.Add(21, new Tuple<string, bool>("trinsic", true));
-                        _musicData.Add(22, new Tuple<string, bool>("vesper", true));
-                        _musicData.Add(23, new Tuple<string, bool>("wind", true));
-                        _musicData.Add(24, new Tuple<string, bool>("yew", true));
-                        _musicData.Add(25, new Tuple<string, bool>("cave01", false));
-                        _musicData.Add(26, new Tuple<string, bool>("dungeon9", false));
-                        _musicData.Add(27, new Tuple<string, bool>("forest_a", false));
-                        _musicData.Add(28, new Tuple<string, bool>("intown01", false));
-                        _musicData.Add(29, new Tuple<string, bool>("jungle_a", false));
-                        _musicData.Add(30, new Tuple<string, bool>("mountn_a", false));
-                        _musicData.Add(31, new Tuple<string, bool>("plains_a", false));
-                        _musicData.Add(32, new Tuple<string, bool>("sailing", false));
-                        _musicData.Add(33, new Tuple<string, bool>("swamp_a", false));
-                        _musicData.Add(34, new Tuple<string, bool>("tavern01", false));
-                        _musicData.Add(35, new Tuple<string, bool>("tavern02", false));
-                        _musicData.Add(36, new Tuple<string, bool>("tavern03", false));
-                        _musicData.Add(37, new Tuple<string, bool>("tavern04", false));
-                        _musicData.Add(38, new Tuple<string, bool>("combat1", false));
-                        _musicData.Add(39, new Tuple<string, bool>("combat2", false));
-                        _musicData.Add(40, new Tuple<string, bool>("combat3", false));
-                        _musicData.Add(41, new Tuple<string, bool>("approach", false));
-                        _musicData.Add(42, new Tuple<string, bool>("death", false));
-                        _musicData.Add(43, new Tuple<string, bool>("victory", false));
-                        _musicData.Add(44, new Tuple<string, bool>("btcastle", false));
-                        _musicData.Add(45, new Tuple<string, bool>("nujelm", true));
-                        _musicData.Add(46, new Tuple<string, bool>("dungeon2", false));
-                        _musicData.Add(47, new Tuple<string, bool>("cove", true));
-                        _musicData.Add(48, new Tuple<string, bool>("moonglow", true));
-                        _musicData.Add(49, new Tuple<string, bool>("zento", true));
-                        _musicData.Add(50, new Tuple<string, bool>("tokunodungeon", true));
-                        _musicData.Add(51, new Tuple<string, bool>("Taiko", true));
-                        _musicData.Add(52, new Tuple<string, bool>("dreadhornarea", true));
-                        _musicData.Add(53, new Tuple<string, bool>("elfcity", true));
-                        _musicData.Add(54, new Tuple<string, bool>("grizzledungeon", true));
-                        _musicData.Add(55, new Tuple<string, bool>("melisandeslair", true));
-                        _musicData.Add(56, new Tuple<string, bool>("paroxysmuslair", true));
-                        _musicData.Add(57, new Tuple<string, bool>("gwennoconversation", true));
-                        _musicData.Add(58, new Tuple<string, bool>("goodendgame", true));
-                        _musicData.Add(59, new Tuple<string, bool>("goodvsevil", true));
-                        _musicData.Add(60, new Tuple<string, bool>("greatearthserpents", true));
-                        _musicData.Add(61, new Tuple<string, bool>("humanoids_u9", true));
-                        _musicData.Add(62, new Tuple<string, bool>("minocnegative", true));
-                        _musicData.Add(63, new Tuple<string, bool>("paws", true));
-                        _musicData.Add(64, new Tuple<string, bool>("selimsbar", true));
-                        _musicData.Add(65, new Tuple<string, bool>("serpentislecombat_u7", true));
-                        _musicData.Add(66, new Tuple<string, bool>("valoriaships", true));
-                    }
-
-                    _useDigitalMusicFolder = Directory.Exists(Path.Combine(Settings.GlobalSettings.UltimaOnlineDirectory, "Music", "Digital"));
+                    _file = new UOFileMul(path, idxpath, Constants.MAX_SOUND_DATA_INDEX_COUNT);
                 }
-            );
+                else
+                {
+                    throw new FileNotFoundException("no sounds found");
+                }
+            }
+
+            _file.FillEntries(ref Entries);
+
+            string def = UOFileManager.GetUOFilePath("Sound.def");
+
+            if (File.Exists(def))
+            {
+                using (DefReader reader = new DefReader(def))
+                {
+                    while (reader.Next())
+                    {
+                        int index = reader.ReadInt();
+
+                        if (index < 0 || index >= Constants.MAX_SOUND_DATA_INDEX_COUNT || index >= _file.Length || Entries[index].Length != 0)
+                        {
+                            continue;
+                        }
+
+                        int[] group = reader.ReadGroup();
+
+                        if (group == null)
+                        {
+                            continue;
+                        }
+
+                        for (int i = 0; i < group.Length; i++)
+                        {
+                            int checkIndex = group[i];
+
+                            if (checkIndex < -1 || checkIndex >= Constants.MAX_SOUND_DATA_INDEX_COUNT)
+                            {
+                                continue;
+                            }
+
+                            ref UOFileIndex ind = ref Entries[index];
+
+                            if (checkIndex == -1)
+                            {
+                                ind = default;
+                            }
+                            else
+                            {
+                                ref readonly UOFileIndex outInd = ref Entries[checkIndex];
+
+                                if (outInd.Length == 0)
+                                {
+                                    continue;
+                                }
+
+                                Entries[index] = Entries[checkIndex];
+                            }
+                        }
+                    }
+                }
+            }
+
+            path = UOFileManager.GetUOFilePath(Client.Version >= ClientVersion.CV_4011C ? @"Music/Digital/Config.txt" : @"Music/Config.txt");
+
+            if (File.Exists(path))
+            {
+                using (StreamReader reader = new StreamReader(path))
+                {
+                    string line;
+
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (TryParseConfigLine(line, out Tuple<int, string, bool> songData))
+                        {
+                            _musicData[songData.Item1] = new Tuple<string, bool>(songData.Item2, songData.Item3);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                _musicData.Add(0, new Tuple<string, bool>("oldult01", true));
+                _musicData.Add(1, new Tuple<string, bool>("create1", false));
+                _musicData.Add(2, new Tuple<string, bool>("dragflit", false));
+                _musicData.Add(3, new Tuple<string, bool>("oldult02", true));
+                _musicData.Add(4, new Tuple<string, bool>("oldult03", true));
+                _musicData.Add(5, new Tuple<string, bool>("oldult04", true));
+                _musicData.Add(6, new Tuple<string, bool>("oldult05", true));
+                _musicData.Add(7, new Tuple<string, bool>("oldult06", true));
+                _musicData.Add(8, new Tuple<string, bool>("stones2", true));
+                _musicData.Add(9, new Tuple<string, bool>("britain1", true));
+                _musicData.Add(10, new Tuple<string, bool>("britain2", true));
+                _musicData.Add(11, new Tuple<string, bool>("bucsden", true));
+                _musicData.Add(12, new Tuple<string, bool>("jhelom", false));
+                _musicData.Add(13, new Tuple<string, bool>("lbcastle", false));
+                _musicData.Add(14, new Tuple<string, bool>("linelle", false));
+                _musicData.Add(15, new Tuple<string, bool>("magincia", true));
+                _musicData.Add(16, new Tuple<string, bool>("minoc", true));
+                _musicData.Add(17, new Tuple<string, bool>("ocllo", true));
+                _musicData.Add(18, new Tuple<string, bool>("samlethe", false));
+                _musicData.Add(19, new Tuple<string, bool>("serpents", true));
+                _musicData.Add(20, new Tuple<string, bool>("skarabra", true));
+                _musicData.Add(21, new Tuple<string, bool>("trinsic", true));
+                _musicData.Add(22, new Tuple<string, bool>("vesper", true));
+                _musicData.Add(23, new Tuple<string, bool>("wind", true));
+                _musicData.Add(24, new Tuple<string, bool>("yew", true));
+                _musicData.Add(25, new Tuple<string, bool>("cave01", false));
+                _musicData.Add(26, new Tuple<string, bool>("dungeon9", false));
+                _musicData.Add(27, new Tuple<string, bool>("forest_a", false));
+                _musicData.Add(28, new Tuple<string, bool>("intown01", false));
+                _musicData.Add(29, new Tuple<string, bool>("jungle_a", false));
+                _musicData.Add(30, new Tuple<string, bool>("mountn_a", false));
+                _musicData.Add(31, new Tuple<string, bool>("plains_a", false));
+                _musicData.Add(32, new Tuple<string, bool>("sailing", false));
+                _musicData.Add(33, new Tuple<string, bool>("swamp_a", false));
+                _musicData.Add(34, new Tuple<string, bool>("tavern01", false));
+                _musicData.Add(35, new Tuple<string, bool>("tavern02", false));
+                _musicData.Add(36, new Tuple<string, bool>("tavern03", false));
+                _musicData.Add(37, new Tuple<string, bool>("tavern04", false));
+                _musicData.Add(38, new Tuple<string, bool>("combat1", false));
+                _musicData.Add(39, new Tuple<string, bool>("combat2", false));
+                _musicData.Add(40, new Tuple<string, bool>("combat3", false));
+                _musicData.Add(41, new Tuple<string, bool>("approach", false));
+                _musicData.Add(42, new Tuple<string, bool>("death", false));
+                _musicData.Add(43, new Tuple<string, bool>("victory", false));
+                _musicData.Add(44, new Tuple<string, bool>("btcastle", false));
+                _musicData.Add(45, new Tuple<string, bool>("nujelm", true));
+                _musicData.Add(46, new Tuple<string, bool>("dungeon2", false));
+                _musicData.Add(47, new Tuple<string, bool>("cove", true));
+                _musicData.Add(48, new Tuple<string, bool>("moonglow", true));
+                _musicData.Add(49, new Tuple<string, bool>("zento", true));
+                _musicData.Add(50, new Tuple<string, bool>("tokunodungeon", true));
+                _musicData.Add(51, new Tuple<string, bool>("Taiko", true));
+                _musicData.Add(52, new Tuple<string, bool>("dreadhornarea", true));
+                _musicData.Add(53, new Tuple<string, bool>("elfcity", true));
+                _musicData.Add(54, new Tuple<string, bool>("grizzledungeon", true));
+                _musicData.Add(55, new Tuple<string, bool>("melisandeslair", true));
+                _musicData.Add(56, new Tuple<string, bool>("paroxysmuslair", true));
+                _musicData.Add(57, new Tuple<string, bool>("gwennoconversation", true));
+                _musicData.Add(58, new Tuple<string, bool>("goodendgame", true));
+                _musicData.Add(59, new Tuple<string, bool>("goodvsevil", true));
+                _musicData.Add(60, new Tuple<string, bool>("greatearthserpents", true));
+                _musicData.Add(61, new Tuple<string, bool>("humanoids_u9", true));
+                _musicData.Add(62, new Tuple<string, bool>("minocnegative", true));
+                _musicData.Add(63, new Tuple<string, bool>("paws", true));
+                _musicData.Add(64, new Tuple<string, bool>("selimsbar", true));
+                _musicData.Add(65, new Tuple<string, bool>("serpentislecombat_u7", true));
+                _musicData.Add(66, new Tuple<string, bool>("valoriaships", true));
+            }
+
+            _useDigitalMusicFolder = Directory.Exists(Path.Combine(Settings.GlobalSettings.UltimaOnlineDirectory, "Music", "Digital"));
+
         }
 
         private unsafe bool TryGetSound(int sound, out byte[] data, out string name)
@@ -283,7 +279,7 @@ namespace ClassicUO.IO.Resources
             {
                 data[i] = _file.ReadByte();
             }
-            
+
             return true;
         }
 
@@ -330,7 +326,7 @@ namespace ClassicUO.IO.Resources
             // Enumerate all files in the directory, using the file name as a pattern
             // This will list all case variants of the filename even on file systems that
             // are case sensitive.
-            Regex  pattern = new Regex($"^{name}.mp3", RegexOptions.IgnoreCase);
+            Regex pattern = new Regex($"^{name}.mp3", RegexOptions.IgnoreCase);
             //string[] fileList = Directory.GetFiles(dir, "*.mp3", SearchOption.AllDirectories).Where(path => pattern.IsMatch(Path.GetFileName(path))).ToArray();
             string[] fileList = Directory.GetFiles(dir, "*.mp3", SearchOption.AllDirectories);
             fileList = Array.FindAll(fileList, path => pattern.IsMatch(Path.GetFileName(path)));
@@ -347,7 +343,7 @@ namespace ClassicUO.IO.Resources
 
                 return Path.GetFileName(fileList[0]);
             }
-            
+
             // If we've made it this far, there is no file with that name, regardless of case spelling
             // return name and GetMusic will fail gracefully (play nothing)
             Log.Warn($"No File found known as {name}");

@@ -315,9 +315,9 @@ namespace ClassicUO.IO.Resources
             ProcessCorpseDef();
         }
 
-        public override unsafe Task Load()
+        public override unsafe void Load()
         {
-            return Task.Run(LoadInternal);
+            LoadInternal();
         }
 
         private void ProcessEquipConvDef()
